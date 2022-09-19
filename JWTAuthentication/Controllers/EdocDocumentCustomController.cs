@@ -580,7 +580,7 @@ namespace JWTAuthentication.Controllers
 
                 //********** check userid **********//
                 _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
-                var dataUser = _context.Userinfos.Where(a => a.Usrid == rawData.Username).Select(a => a.Bid).ToList();
+                var dataUser = _context.Userinfos.Where(a => a.Usrid == rawData.Username).OrderBy(a => a.Mainbid).Select(a => a.Bid).ToList();
 
                 if (dataUser == null)
                 {
