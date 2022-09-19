@@ -569,18 +569,22 @@ namespace JWTAuthentication.Controllers
         [Authorize]
         [HttpGet]
         [Route("GetBasketInfoforIPST")]
-        public ActionResult<EdocDocGetBasketInfoRs> GetBasketInfoforIPST([Required] string usrID, [Required] string appID)
+        public ActionResult<EdocDocGetBasketInfoRs> GetBasketInfoforIPST(EdocDocGetBasketInfoRq edocDocGetBasketInfoRq)
         {
             string method = "GetBasketInfoforIPST";
             try
             {
+                var rawData = edocDocGetBasketInfoRq.RqDetail;
+                string userBid = string.Empty;
+                string fullName = string.Empty;
+
                 //********** check userid **********//
                 _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
-                var dataUser = _context.Userinfos.Where(a => a.Usrid == usrID).Select(a => a.Bid).ToList();
+                var dataUser = _context.Userinfos.Where(a => a.Usrid == rawData.Username).Select(a => a.Bid).ToList();
 
                 if (dataUser == null)
                 {
-                    var responseMsg = CheckUser(method, appID);
+                    var responseMsg = CheckUser(method, edocDocGetBasketInfoRq.RqHeader.AppId);
 
                     return StatusCode(400, responseMsg);
                 }
@@ -615,7 +619,7 @@ namespace JWTAuthentication.Controllers
                 {
                     RsHeader = new Models.EdocDocumentGetBasketInfo.RsHeader
                     {
-                        AppId = appID,
+                        AppId = edocDocGetBasketInfoRq.RqHeader.AppId,
                         Status = new Models.EdocDocumentGetBasketInfo.RsHeaderStatus
                         {
                             OrgStatusCode = "0",
@@ -627,7 +631,7 @@ namespace JWTAuthentication.Controllers
                     RsDetail = ret
                 };
 
-                CreateLog(method, "Success", appID);
+                CreateLog(method, "Success", edocDocGetBasketInfoRq.RqHeader.AppId);
 
                 return StatusCode(200, res);
             }
@@ -637,7 +641,7 @@ namespace JWTAuthentication.Controllers
                 {
                     RsHeader = new Models.EdocDocumentGetBasketInfo.RsHeader
                     {
-                        AppId = appID,
+                        AppId = edocDocGetBasketInfoRq.RqHeader.AppId,
                         Status = new Models.EdocDocumentGetBasketInfo.RsHeaderStatus
                         {
                             OrgStatusCode = "Error999",
@@ -648,7 +652,7 @@ namespace JWTAuthentication.Controllers
                     RsDetail = null
                 };
 
-                CreateLog(method, "Error999 - " + ex.Message, appID);
+                CreateLog(method, "Error999 - " + ex.Message, edocDocGetBasketInfoRq.RqHeader.AppId);
 
                 return StatusCode(400, res);
             }
