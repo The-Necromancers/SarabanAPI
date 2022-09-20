@@ -2029,6 +2029,8 @@ namespace JWTAuthentication.Controllers
                     workinProcess.ActionMsg = updateActionMsg;
                     _context.SaveChanges();
 
+                    UpdateRegNoBasketinfo(currentRegNo, receiverBid);
+
                     return "Success";
                 }
             }
@@ -2212,9 +2214,17 @@ namespace JWTAuthentication.Controllers
                 else
                 {
                     string[] item = regNo.Split(".");
-                    string result = item[0].TrimStart('0');
 
-                    return result;
+                    if (item[0] == "0000000")
+                    {
+                        return "0";
+                    }
+                    else
+                    {
+                        string result = item[0].TrimStart('0');
+
+                        return result;
+                    }
                 }
             }
             catch (Exception)
@@ -2526,6 +2536,28 @@ namespace JWTAuthentication.Controllers
                 };
 
                 _context.Basketinfos.Add(data);
+
+                _context.SaveChanges();
+
+                return true;
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        public Boolean UpdateRegNoBasketinfo(string regNo, string bid)
+        {
+            try
+            {
+                var dataBasket = _context.Basketinfos.Where(a => a.Bid == bid).FirstOrDefault();
+
+                int item = int.Parse(regNo);
+                string tmpRegNo = item.ToString("D7");
+                string result = tmpRegNo + ".00";
+                dataBasket.RegisterNo = result;
 
                 _context.SaveChanges();
 
