@@ -1334,6 +1334,8 @@ namespace JWTAuthentication.Controllers
             try
             {
                 var rawData = edocDocSendRq.RqDetail;
+                string userBid = string.Empty;
+                string username = string.Empty;
 
                 //********** check userid **********//
                 _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
@@ -1341,13 +1343,26 @@ namespace JWTAuthentication.Controllers
 
                 if (dataUser == null)
                 {
-                    var responseMsg = CheckUser(method, edocDocSendRq.RqHeader.AppId);
+                    var userMainBid = _context.Userinfos.Where(a => a.Usrid == rawData.Username && a.Mainbid == "0").FirstOrDefault();
 
-                    return StatusCode(400, responseMsg);
+                    if (userMainBid == null)
+                    {
+                        var responseMsg = CheckUser(method, edocDocSendRq.RqHeader.AppId);
+
+                        return StatusCode(400, responseMsg);
+                    }
+                    else
+                    {
+                        userBid = userMainBid.Bid;
+                        username = userMainBid.Username;
+                    }
+                }
+                else
+                {
+                    userBid = dataUser.Bid;
+                    username = dataUser.Username;
                 }
                 //*********************************//
-
-                string fullName = dataUser.Username;
 
                 //********** check data **********//
                 var data = _context.Workinfos.Where(a => a.Wid == rawData.WID).FirstOrDefault();
@@ -1370,7 +1385,7 @@ namespace JWTAuthentication.Controllers
                     }
                     else
                     {
-                        UpdateWorkinproc(rawData.WID, rawData.ReceiverBasketID, rawData.SenderBasketID, rawData.Username, fullName);
+                        UpdateWorkinproc(rawData.WID, rawData.ReceiverBasketID, rawData.SenderBasketID, rawData.Username, username);
 
                         var res = new EdocDocSendRs
                         {

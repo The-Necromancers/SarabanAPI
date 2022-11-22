@@ -10,7 +10,7 @@ namespace JWTAuthentication.Models.EdocDocumentSend
         [Required(ErrorMessage = "Username is required")]
         public string Username { get; set; }
 
-        [Required(ErrorMessage = "SenderBasketID is required")]
+        [Required(ErrorMessage = "SenderBasketID is required", AllowEmptyStrings = true)]
         public string SenderBasketID { get; set; }
 
         [Required(ErrorMessage = "ReceiverBasketID is required")]
