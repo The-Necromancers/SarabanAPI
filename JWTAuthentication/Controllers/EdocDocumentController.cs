@@ -1059,6 +1059,17 @@ namespace JWTAuthentication.Controllers
                 }
                 //********************************//
 
+                if (!string.IsNullOrWhiteSpace(rawData.FileData))
+                {
+                    if (!Directory.Exists("c:\\WebAPILog"))
+                    {
+                        Directory.CreateDirectory("c:\\WebAPILog");
+                    }
+                    var remoteIpAddress = Request.HttpContext.Connection.RemoteIpAddress;
+                    var filename = "c:\\WebAPILog\\Saraban_api_filebase64_" + DateTime.Now.ToString("yyyy-MM-dd", new CultureInfo("th-TH")) + ".txt";
+                    System.IO.File.AppendAllText(filename, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", new CultureInfo("th-TH")) + " " + "Request From appID =" + " " + "" + edocDocUploadRq.RqHeader.AppId + "" + " " + "" + remoteIpAddress + "" + " " + "Filedata =" + " " + "" + rawData.FileData + "" + Environment.NewLine);
+                }
+
                 if (CreateAttachment(edocDocUploadRq, userBid, username))
                 {
                     var res = new EdocDocUploadRs
@@ -2343,17 +2354,24 @@ namespace JWTAuthentication.Controllers
 
             if (fileTemp != "")
             {
-                strExt = Path.GetExtension(strSourcePath);
-                strHomeDir = dataBasketInfo.HomeDir;
-                string flowPath = strHomeDir.ToUpper().Replace("\\\\" + ipWebServer.ToUpper(), flowData);
-                strDestPath = flowPath + "\\" + strDocuname + strExt;
-                strHomeDir = strHomeDir + "\\" + strDocuname + strExt;
-
-                if (System.IO.File.Exists(strDestPath))
+                if (fileTemp == "notfound")
                 {
-                    System.IO.File.Delete(strDestPath);
+                    return false;
                 }
-                System.IO.File.Copy(strSourcePath, strDestPath);
+                else
+                {
+                    strExt = Path.GetExtension(strSourcePath);
+                    strHomeDir = dataBasketInfo.HomeDir;
+                    string flowPath = strHomeDir.ToUpper().Replace("\\\\" + ipWebServer.ToUpper(), flowData);
+                    strDestPath = flowPath + "\\" + strDocuname + strExt;
+                    strHomeDir = strHomeDir + "\\" + strDocuname + strExt;
+
+                    if (System.IO.File.Exists(strDestPath))
+                    {
+                        System.IO.File.Delete(strDestPath);
+                    }
+                    System.IO.File.Copy(strSourcePath, strDestPath);
+                }
             }
             else
             {
@@ -2423,8 +2441,15 @@ namespace JWTAuthentication.Controllers
                     var fs = new FileStream(fullPath, FileMode.CreateNew);
                     fs.Write(bytes, 0, bytes.Length);
                     fs.Close();
-                    
-                    return fullPath;
+
+                    if (System.IO.File.Exists(fullPath))
+                    {
+                        return fullPath;
+                    }
+                    else
+                    {
+                        return "notfound";
+                    }
                 }
             }
             catch (Exception ex)
