@@ -1067,7 +1067,7 @@ namespace JWTAuthentication.Controllers
                     }
                     var remoteIpAddress = Request.HttpContext.Connection.RemoteIpAddress;
                     var filename = "c:\\WebAPILog\\Saraban_api_filebase64_" + DateTime.Now.ToString("yyyy-MM-dd", new CultureInfo("th-TH")) + ".txt";
-                    System.IO.File.AppendAllText(filename, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", new CultureInfo("th-TH")) + " " + "Request From appID =" + " " + "" + edocDocUploadRq.RqHeader.AppId + "" + " " + "" + remoteIpAddress + "" + " " + "Filedata =" + " " + "" + rawData.FileData + "" + Environment.NewLine);
+                    System.IO.File.AppendAllText(filename, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", new CultureInfo("th-TH")) + " " + "Request From appID =" + " " + "" + edocDocUploadRq.RqHeader.AppId + "" + " " + "" + remoteIpAddress + "" + " " + "Wid =" + " " + "" + rawData.WID + "" + " " + "Filename =" + " " + "" + rawData.FileName + "" + " " + "Filedata =" + " " + "" + rawData.FileData + "" + Environment.NewLine + Environment.NewLine);
                 }
 
                 if (CreateAttachment(edocDocUploadRq, userBid, username))
@@ -2397,7 +2397,7 @@ namespace JWTAuthentication.Controllers
                 Attachtime = RegisterTime,
                 Attachname = strHomeDir,
                 Userattach = username + " : " + dataWorkInfo.RegisterBdsc,
-                Contextattach = rawData.Detail,
+                Contextattach = rawData.FileName + strExt,
                 Itemno = count.ToString(),
                 Actionmsg = strNewActionMsg,
                 Linkwid = rawData.LinkWID,
