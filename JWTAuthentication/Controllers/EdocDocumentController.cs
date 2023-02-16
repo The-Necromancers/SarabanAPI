@@ -973,7 +973,7 @@ namespace JWTAuthentication.Controllers
             }
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost]
         [Route("DocumentUpload")]
         public ActionResult<EdocDocUploadRs> DocumentUpload(EdocDocUploadRq edocDocUploadRq)
@@ -2363,8 +2363,8 @@ namespace JWTAuthentication.Controllers
                     strExt = Path.GetExtension(strSourcePath);
                     strHomeDir = dataBasketInfo.HomeDir;
                     string flowPath = strHomeDir.ToUpper().Replace("\\\\" + ipWebServer.ToUpper(), flowData);
-                    strDestPath = flowPath + "\\" + strDocuname + strExt;
-                    strHomeDir = strHomeDir + "\\" + strDocuname + strExt;
+                    strDestPath = flowPath + "\\" + newDocuname + strExt;
+                    strHomeDir = strHomeDir + "\\" + newDocuname + strExt;
 
                     if (System.IO.File.Exists(strDestPath))
                     {
@@ -2375,8 +2375,9 @@ namespace JWTAuthentication.Controllers
             }
             else
             {
-                strHomeDir = dataBasketInfo.HomeDir;
-                strHomeDir = strHomeDir + "\\" + strDocuname;
+                return false;
+                //strHomeDir = dataBasketInfo.HomeDir;
+                //strHomeDir = strHomeDir + "\\" + strDocuname;
             }
 
             var dataDocAttm = _context.Docattaches.Where(a => a.Wid == rawData.WID && a.Bid == curBid).OrderByDescending(x => x.Itemno).FirstOrDefault();
