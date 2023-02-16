@@ -1,8 +1,6 @@
 ﻿using JWTAuthentication.Models.ConsoleCreateUser;
-using JWTAuthentication.Models.DB_Saraban;
 using JWTAuthentication.Models.DB_User;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -43,7 +41,8 @@ namespace JWTAuthentication.Controllers
 
             try
             {
-                var rawData = consoleCreateUserRq.RqDetail;
+                var rawData = consoleCreateUserRq;
+                string appId = "1";
                 string mode = rawData.reqType;
                 string item = AesDecryptfromHex(rawData.requestParam, secretkey, vector);
 
@@ -60,7 +59,7 @@ namespace JWTAuthentication.Controllers
                             responseMsg = "Success"
                         };
 
-                        CreateLog(method, "Success", consoleCreateUserRq.RqHeader.AppId);
+                        CreateLog(method, "Success", appId);
 
                         return StatusCode(200, addRes);
 
@@ -72,7 +71,7 @@ namespace JWTAuthentication.Controllers
                             responseMsg = "Success"
                         };
 
-                        CreateLog(method, "Success", consoleCreateUserRq.RqHeader.AppId);
+                        CreateLog(method, "Success", appId);
 
                         return StatusCode(200, editRes);
 
@@ -84,7 +83,7 @@ namespace JWTAuthentication.Controllers
                             responseMsg = "Success"
                         };
 
-                        CreateLog(method, "Success", consoleCreateUserRq.RqHeader.AppId);
+                        CreateLog(method, "Success", appId);
 
                         return StatusCode(200, deleteRes);
 
@@ -96,7 +95,7 @@ namespace JWTAuthentication.Controllers
                             responseMsg = "Invalid data"
                         };
 
-                        CreateLog(method, "Invalid data", consoleCreateUserRq.RqHeader.AppId);
+                        CreateLog(method, "Invalid data", appId);
 
                         return StatusCode(400, res);
                 }
@@ -104,14 +103,15 @@ namespace JWTAuthentication.Controllers
             }
             catch (Exception ex)
             {
+                var appId = "1";
                 var res = new Models.ConsoleCreateUser.ConsoleCreateUserRs
                 {
-                    requestId = consoleCreateUserRq.RqDetail.requestId,
+                    requestId = appId,
                     responseCode = "9999",
                     responseMsg = ex.Message
                 };
 
-                CreateLog(method, "9999" + ex.Message, consoleCreateUserRq.RqHeader.AppId);
+                CreateLog(method, "9999" + ex.Message, appId);
 
                 return StatusCode(500, res);
             }
@@ -131,9 +131,9 @@ namespace JWTAuthentication.Controllers
             {
                 using (Aes aes = Aes.Create())
                 {
-                    byte[] data = ASCIIEncoding.ASCII.GetBytes(plaintext);
-                    byte[] key = ASCIIEncoding.ASCII.GetBytes(secretkey);
-                    byte[] iv = ASCIIEncoding.ASCII.GetBytes(vector);
+                    byte[] data = Encoding.UTF8.GetBytes(plaintext);
+                    byte[] key = Encoding.UTF8.GetBytes(secretkey);
+                    byte[] iv = Encoding.UTF8.GetBytes(vector);
                     aes.KeySize = 256;
                     aes.Mode = CipherMode.CBC;
 
@@ -160,8 +160,8 @@ namespace JWTAuthentication.Controllers
                 using (Aes aes = Aes.Create())
                 {
                     byte[] data = Convert.FromHexString(plaintext);
-                    byte[] key = ASCIIEncoding.ASCII.GetBytes(secretkey);
-                    byte[] iv = ASCIIEncoding.ASCII.GetBytes(vector);
+                    byte[] key = Encoding.UTF8.GetBytes(secretkey);
+                    byte[] iv = Encoding.UTF8.GetBytes(vector);
                     aes.KeySize = 256;
                     aes.Mode = CipherMode.CBC;
 
@@ -171,7 +171,7 @@ namespace JWTAuthentication.Controllers
                         cs.Close();
                     }
 
-                    result = ASCIIEncoding.ASCII.GetString(ms.ToArray());
+                    result = Encoding.UTF8.GetString(ms.ToArray());
                 }
             }
 
@@ -201,13 +201,13 @@ namespace JWTAuthentication.Controllers
 
         public bool CreateUserToConsole(string data)
         {
-            var dataUser = _context.UserDetails.Max(a => a.Id);
+            var dataUser = _context.UserDetails.Where(a => a.Id != "99999").Max(a => a.Id);
             int newid = int.Parse(dataUser) + 1;
             string[] arr = data.Split("|");
-            string strSQL = "insert into user_detail values('" + newid.ToString() + "','" + arr[0] + "','KSJK','','" + arr[0] + "','" + arr[0] + "','" + arr[0] + "','";
-            strSQL = strSQL + arr[0] + "','','','','','','','8888888888888','','','','','','','','','','','','','','','')";
+            string strSQL = "insert into user_detail values('" + newid.ToString("D5") + "','" + arr[0].ToUpper() + "','KSJK','','" + arr[0] + "','" + arr[0] + "','" + arr[0].ToUpper() + "','";
+            strSQL = strSQL + arr[0].ToUpper() + "','','','','','','','8888888888888','','','','','','','','','','','','','','','')";
 
-            string connectionString = SetSQLConnectionString();
+            string connectionString = _configuration.GetConnectionString("UserDatabase");
             SqlConnection Connection = new SqlConnection(connectionString);
             Connection.Open();
             SqlTransaction Transaction = null;
@@ -242,7 +242,7 @@ namespace JWTAuthentication.Controllers
                 int pwdStart = connStr.IndexOf("Password=") + "Password=".Length;
                 int pwdEnd = connStr.IndexOf(";ConnectRetryCount") - pwdStart;
                 string pwd = connStr.Substring(pwdStart, pwdEnd);
-                string result = "Server=" + ip + ";Database=" + dbName + ";user id=" + uid + ";Password=" + pwd + ";ConnectRetryCount=0";
+                string result = "Server=" + ip + "Database=" + dbName + "user id=" + uid + "Password=" + pwd + "ConnectRetryCount=0";
 
                 return result;
             }

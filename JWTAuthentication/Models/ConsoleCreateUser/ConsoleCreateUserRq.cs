@@ -2,7 +2,8 @@
 {
     public class ConsoleCreateUserRq
     {
-        public RqHeader RqHeader { get; set; }
-        public RqDetail RqDetail { get; set; }
+        public string requestId { get; set; }
+        public string reqType { get; set; }
+        public string requestParam { get; set; }
     }
 }
