@@ -21,6 +21,7 @@
   <ItemGroup>
     <Folder Include="Models\DB_Cabinet\" />
     <Folder Include="Models\DB_Doccir\" />
+    <Folder Include="Models\DB_User\" />
   </ItemGroup>
 
 </Project>

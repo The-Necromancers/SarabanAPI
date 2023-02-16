@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using JWTAuthentication.Models.DB_Cabinet;
+using JWTAuthentication.Models.DB_User;
 using JWTAuthentication.Models.DB_Saraban;
 using JWTAuthentication.Models.DB_Doccir;
 
@@ -14,6 +15,7 @@ ConfigurationManager configuration = builder.Configuration;
 // For Entity Framework
 builder.Services.AddDbContext<JwtDBContext>(options => options.UseSqlServer(configuration.GetConnectionString("JwtDatabase")));
 builder.Services.AddDbContext<RwCabinetContext>(options => options.UseSqlServer(configuration.GetConnectionString("CabinetDatabase")));
+builder.Services.AddDbContext<RwUserContext>(options => options.UseSqlServer(configuration.GetConnectionString("UserDatabase")));
 builder.Services.AddDbContext<RwSaraban64Context>(options => options.UseSqlServer(configuration.GetConnectionString("SarabanDatabase")));
 builder.Services.AddDbContext<AotDoccirContext>(options => options.UseSqlServer(configuration.GetConnectionString("DoccirDatabase")));
 
