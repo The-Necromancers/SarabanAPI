@@ -2375,9 +2375,8 @@ namespace JWTAuthentication.Controllers
             }
             else
             {
-                return false;
-                //strHomeDir = dataBasketInfo.HomeDir;
-                //strHomeDir = strHomeDir + "\\" + strDocuname;
+                strHomeDir = dataBasketInfo.HomeDir;
+                strHomeDir = strHomeDir + "\\" + newDocuname;
             }
 
             var dataDocAttm = _context.Docattaches.Where(a => a.Wid == rawData.WID && a.Bid == curBid).OrderByDescending(x => x.Itemno).FirstOrDefault();
