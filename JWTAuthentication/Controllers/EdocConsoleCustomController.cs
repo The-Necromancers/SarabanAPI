@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml.Linq;
 
 namespace JWTAuthentication.Controllers
 {
@@ -16,7 +18,6 @@ namespace JWTAuthentication.Controllers
     {
         private readonly RwUserContext _context;
         private readonly IConfiguration _configuration;
-        private string msgLog;
 
         public EdocConsoleCustomController(RwUserContext context, IConfiguration configuration)
         {
@@ -36,56 +37,114 @@ namespace JWTAuthentication.Controllers
         public ActionResult<ConsoleCreateUserRs> CreateUserforRedcross(ConsoleCreateUserRq consoleCreateUserRq)
         {
             string method = "CreateUserforRedcross";
-            string secretkey = "nI1FVluWjbglxMPXk5ZIFETIXmqGx2KH";
-            string vector = "h4BQ9Bi6DKJ24lMs";
 
             try
             {
                 var rawData = consoleCreateUserRq;
                 string appId = "1";
                 string mode = rawData.reqType;
-                string item = AesDecryptfromHex(rawData.requestParam, secretkey, vector);
+                string idcard = rawData.empProfile.IdentityCard;
+                string fname = rawData.empProfile.FirstName;
+                string lname = rawData.empProfile.LastName;
+                string fnameEng = rawData.empProfile.FirstNameEng;
+                string lnameEng = rawData.empProfile.LastNameEng;
+                string email = rawData.empProfile.email;
+                string empcode = rawData.empProfile.EmpCode;
 
                 switch (mode)
                 {
                     case "Add User":
 
-                        CreateUserToConsole(item);
+                        bool resultCreate = CreateUserToConsole(idcard, fname, lname, fnameEng, lnameEng, email, empcode);
 
-                        var addRes = new Models.ConsoleCreateUser.ConsoleCreateUserRs
+                        if (resultCreate == true)
                         {
-                            requestId = rawData.requestId,
-                            responseCode = "0000",
-                            responseMsg = "Success"
-                        };
+                            var addRes = new Models.ConsoleCreateUser.ConsoleCreateUserRs
+                            {
+                                requestId = rawData.requestId,
+                                responseCode = "0000",
+                                responseMsg = "Success"
+                            };
 
-                        CreateLog(method, "Success", appId);
+                            CreateLog(method, "Success", appId);
 
-                        return StatusCode(200, addRes);
+                            return StatusCode(200, addRes);
+                        }
+                        else
+                        {
+                            var addRes = new Models.ConsoleCreateUser.ConsoleCreateUserRs
+                            {
+                                requestId = rawData.requestId,
+                                responseCode = "1001",
+                                responseMsg = "Invalid data"
+                            };
+
+                            CreateLog(method, "Invalid data", appId);
+
+                            return StatusCode(400, addRes);
+                        }
 
                     case "Edit User":
-                        var editRes = new Models.ConsoleCreateUser.ConsoleCreateUserRs
+
+                        var resultUpdate = UpdateUserToConsole(idcard, fname, lname, fnameEng, lnameEng, email, empcode);
+
+                        if (resultUpdate.Item1 == true)
                         {
-                            requestId = rawData.requestId,
-                            responseCode = "0000",
-                            responseMsg = "Success"
-                        };
+                            var editRes = new Models.ConsoleCreateUser.ConsoleCreateUserRs
+                            {
+                                requestId = rawData.requestId,
+                                responseCode = "0000",
+                                responseMsg = "Success"
+                            };
 
-                        CreateLog(method, "Success", appId);
+                            CreateLog(method, "Success + " + resultUpdate.Item2 + "", appId);
 
-                        return StatusCode(200, editRes);
+                            return StatusCode(200, editRes);
+                        }
+                        else
+                        {
+                            var editRes = new Models.ConsoleCreateUser.ConsoleCreateUserRs
+                            {
+                                requestId = rawData.requestId,
+                                responseCode = "1001",
+                                responseMsg = "Invalid data"
+                            };
+
+                            CreateLog(method, "Invalid data", appId);
+
+                            return StatusCode(400, editRes);
+                        }
 
                     case "Delete User":
-                        var deleteRes = new Models.ConsoleCreateUser.ConsoleCreateUserRs
+
+                        bool resultDelete = DeleteUserfromConsole(idcard);
+
+                        if (resultDelete == true)
                         {
-                            requestId = rawData.requestId,
-                            responseCode = "0000",
-                            responseMsg = "Success"
-                        };
+                            var deleteRes = new Models.ConsoleCreateUser.ConsoleCreateUserRs
+                            {
+                                requestId = rawData.requestId,
+                                responseCode = "0000",
+                                responseMsg = "Success"
+                            };
 
-                        CreateLog(method, "Success", appId);
+                            CreateLog(method, "Success", appId);
 
-                        return StatusCode(200, deleteRes);
+                            return StatusCode(200, deleteRes);
+                        }
+                        else
+                        {
+                            var deleteRes = new Models.ConsoleCreateUser.ConsoleCreateUserRs
+                            {
+                                requestId = rawData.requestId,
+                                responseCode = "1001",
+                                responseMsg = "Invalid data"
+                            };
+
+                            CreateLog(method, "Invalid data", appId);
+
+                            return StatusCode(400, deleteRes);
+                        }
 
                     default:
                         var res = new Models.ConsoleCreateUser.ConsoleCreateUserRs
@@ -99,7 +158,6 @@ namespace JWTAuthentication.Controllers
 
                         return StatusCode(400, res);
                 }
-
             }
             catch (Exception ex)
             {
@@ -199,30 +257,203 @@ namespace JWTAuthentication.Controllers
             }
         }
 
-        public bool CreateUserToConsole(string data)
+        public bool CreateUserToConsole(string idcard, string fname, string lname, string fnameEng, string lnameEng, string email, string empcode)
         {
             var dataUser = _context.UserDetails.Where(a => a.Id != "99999").Max(a => a.Id);
             int newid = int.Parse(dataUser) + 1;
-            string[] arr = data.Split("|");
-            string strSQL = "insert into user_detail values('" + newid.ToString("D5") + "','" + arr[0].ToUpper() + "','KSJK','','" + arr[0] + "','" + arr[0] + "','" + arr[0].ToUpper() + "','";
-            strSQL = strSQL + arr[0].ToUpper() + "','','','','','','','8888888888888','','','','','','','','','','','','','','','')";
+            string checkData = CheckUsername(fname, lname, fnameEng, lnameEng);
 
-            string connectionString = _configuration.GetConnectionString("UserDatabase");
-            SqlConnection Connection = new SqlConnection(connectionString);
-            Connection.Open();
-            SqlTransaction Transaction = null;
-            SqlDataAdapter da = new SqlDataAdapter(strSQL, Connection);
-            SqlCommandBuilder cb = new SqlCommandBuilder(da);
-            da.SelectCommand.Transaction = Transaction;
+            if (checkData == "already")
+            {
+                return false;
+            }
+            else
+            {
+                string strSQL = "insert into user_detail values('" + newid.ToString("D5") + "','" + checkData.ToUpper() + "','KSJK','','" + fname + "','" + lname + "','" + fnameEng.ToUpper() + "','";
+                strSQL = strSQL + lnameEng.ToUpper() + "','','','','','','','8888888888888','','" + empcode + "','','','" + idcard + "','','','" + email + "','','','','','','','')";
 
-            SqlCommand Command = null;
-            Command = Connection.CreateCommand();
-            Command.Transaction = Transaction;
-            Command.CommandText = strSQL;
-            Command.ExecuteNonQuery();
-            Connection.Close();
+                string connectionString = _configuration.GetConnectionString("UserDatabase");
+                SqlConnection Connection = new SqlConnection(connectionString);
+                Connection.Open();
+                SqlTransaction Transaction = null;
+                SqlDataAdapter da = new SqlDataAdapter(strSQL, Connection);
+                SqlCommandBuilder cb = new SqlCommandBuilder(da);
+                da.SelectCommand.Transaction = Transaction;
 
-            return true;
+                SqlCommand Command = null;
+                Command = Connection.CreateCommand();
+                Command.Transaction = Transaction;
+                Command.CommandText = strSQL;
+                Command.ExecuteNonQuery();
+                Connection.Close();
+
+                return true;
+            }
+        }
+
+        public (bool, string) UpdateUserToConsole(string idcard, string fname, string lname, string fnameEng, string lnameEng, string email, string empcode)
+        {
+            var data = _context.UserDetails.Where(a => a.UTel1 == idcard).FirstOrDefault();
+            string log = "";
+
+            if (data != null)
+            {
+                if (fname.Contains("แก้ไข"))
+                {
+                    fname = fname.Replace("แก้ไข", "");
+                    fname = fname.Trim();
+                    log = "แก้ไขชื่อ : จาก " + data.Tname + " เป็น " + fname + " ";
+                }
+
+                if (lname.Contains("แก้ไข"))
+                {
+                    lname = lname.Replace("แก้ไข", "");
+                    lname = lname.Trim();
+                    log = log + "แก้ไขสกุล : จาก " + data.Tsurname + " เป็น " + lname + " ";
+                }
+
+                if (fnameEng.Contains("แก้ไข"))
+                {
+                    fnameEng = fnameEng.Replace("แก้ไข", "");
+                    fnameEng = fnameEng.Trim();
+                    log = log + "แก้ไขชื่ออังกฤษ : จาก " + data.Ename + " เป็น " + fnameEng + " ";
+                }
+
+                if (lnameEng.Contains("แก้ไข"))
+                {
+                    lnameEng = lnameEng.Replace("แก้ไข", "");
+                    lnameEng = lnameEng.Trim();
+                    log = log + "แก้ไขสกุลอังกฤษ : จาก " + data.Esurname + " เป็น " + lnameEng + " ";
+                }
+
+                if (email.Contains("แก้ไข"))
+                {
+                    email = email.Replace("แก้ไข", "");
+                    email = email.Trim();
+                    log = log + "แก้ไข email : จาก " + data.UEmail + " เป็น " + email + " ";
+                }
+
+                if (empcode.Contains("แก้ไข"))
+                {
+                    empcode = empcode.Replace("แก้ไข", "");
+                    empcode = empcode.Trim();
+                    log = log + "แก้ไขรหัสพนักงาน : จาก " + data.UId1 + " เป็น " + empcode + " ";
+                }
+
+                string strSQL = "update user_detail set tname = '" + fname + "', tsurname = '" + lname + "', ename = '" + fnameEng + "', esurname = '" + lnameEng + "', u_email = '";
+                strSQL = strSQL + email + "', u_id1 = '" + empcode + "', u_address = '" + log + "' where u_tel1 = '" + idcard + "'";
+
+                string connectionString = _configuration.GetConnectionString("UserDatabase");
+                SqlConnection Connection = new SqlConnection(connectionString);
+                Connection.Open();
+                SqlTransaction Transaction = null;
+                SqlDataAdapter da = new SqlDataAdapter(strSQL, Connection);
+                SqlCommandBuilder cb = new SqlCommandBuilder(da);
+                da.SelectCommand.Transaction = Transaction;
+
+                SqlCommand Command = null;
+                Command = Connection.CreateCommand();
+                Command.Transaction = Transaction;
+                Command.CommandText = strSQL;
+                Command.ExecuteNonQuery();
+                Connection.Close();
+
+                return (true, log);
+            }
+            else
+            {
+                return (false, "");
+            }
+        }
+
+        public bool DeleteUserfromConsole(string idcard)
+        {
+            var data = _context.UserDetails.Where(a => a.UTel1 == idcard).FirstOrDefault();
+            var status = _context.UstatusDetails.Where(a => a.Name == "ห้ามใช้").FirstOrDefault();
+
+            if (data != null && status != null)
+            {
+                string strSQL = "update user_detail set u_status = '" + status.Id + "' where u_tel1 = '" + idcard + "'";
+
+                string connectionString = _configuration.GetConnectionString("UserDatabase");
+                SqlConnection Connection = new SqlConnection(connectionString);
+                Connection.Open();
+                SqlTransaction Transaction = null;
+                SqlDataAdapter da = new SqlDataAdapter(strSQL, Connection);
+                SqlCommandBuilder cb = new SqlCommandBuilder(da);
+                da.SelectCommand.Transaction = Transaction;
+
+                SqlCommand Command = null;
+                Command = Connection.CreateCommand();
+                Command.Transaction = Transaction;
+                Command.CommandText = strSQL;
+                Command.ExecuteNonQuery();
+                Connection.Close();
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public string CheckUsername(string fname, string lname, string fnameEng, string lnameEng)
+        {
+            string result = "";
+            string tmpusrId = fnameEng + "." + lnameEng[0];
+            var data = _context.UserDetails.Where(a => a.Lname == tmpusrId).FirstOrDefault();
+
+            if (data != null)
+            {
+                var firstname = _context.UserDetails.Where(a => a.Tname == fname).FirstOrDefault();
+
+                if (firstname != null)
+                {
+                    var lastname = _context.UserDetails.Where(a => a.Tsurname == lname).FirstOrDefault();
+
+                    if (lastname != null)
+                    {
+                        result = "already";
+                    }
+                    else
+                    {
+                        string usrid2digit = fnameEng + "." + lnameEng.Substring(0, 2);
+                        var dataUser = _context.UserDetails.Where(a => a.Lname == usrid2digit).FirstOrDefault();
+
+                        if (dataUser != null)
+                        {
+                            string usrid3digit = fnameEng + "." + lnameEng.Substring(0, 3);
+                            result = usrid3digit;
+                        }
+                        else
+                        {
+                            result = usrid2digit;
+                        }
+                    }
+                }
+                else
+                {
+                    string usrid2digit = fnameEng + "." + lnameEng.Substring(0, 2);
+                    var dataUser = _context.UserDetails.Where(a => a.Lname == usrid2digit).FirstOrDefault();
+
+                    if (dataUser != null)
+                    {
+                        string usrid3digit = fnameEng + "." + lnameEng.Substring(0, 3);
+                        result = usrid3digit;
+                    }
+                    else
+                    {
+                        result = usrid2digit;
+                    }
+                }
+            }
+            else
+            {
+                result = tmpusrId;
+            }
+            
+            return result;
         }
 
         public string SetSQLConnectionString()

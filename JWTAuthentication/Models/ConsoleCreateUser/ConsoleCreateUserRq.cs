@@ -4,6 +4,7 @@
     {
         public string requestId { get; set; }
         public string reqType { get; set; }
-        public string requestParam { get; set; }
+        public string appID { get; set; }
+        public RqDetail empProfile { get; set; }
     }
 }
