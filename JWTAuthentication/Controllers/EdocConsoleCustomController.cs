@@ -6,6 +6,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using System.Globalization;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Linq;
@@ -31,11 +32,56 @@ namespace JWTAuthentication.Controllers
 
         // RedCross //
 
-        [Authorize]
+        //[Authorize]
         [HttpPost]
         [Route("CreateUserforRedcross")]
         public ActionResult<ConsoleCreateUserRs> CreateUserforRedcross(ConsoleCreateUserRq consoleCreateUserRq)
         {
+            // Change Authen Type to Basic //
+
+            string authorize = Request.Headers["Authorization"];
+            string username = _configuration.GetSection("BasicAuthen").GetSection("Username").Value;
+            string password = _configuration.GetSection("BasicAuthen").GetSection("Password").Value;
+
+            if (authorize != null)
+            {
+                string item = authorize.Replace("Basic ", "");
+                byte[] data = Convert.FromBase64String(item);
+                string decode = Encoding.UTF8.GetString(data);
+                string[] arr = decode.Split(':');
+                string user = arr[0];
+                string pwd = arr[1];
+
+                if (user == username && pwd == password)
+                {
+                    
+                }
+                else
+                {
+                    var Res = new Models.ConsoleCreateUser.ConsoleCreateUserRs
+                    {
+                        requestId = consoleCreateUserRq.requestId,
+                        responseCode = "1002",
+                        responseMsg = "Unauthorized application"
+                    };
+
+                    return StatusCode(401, Res);
+                }
+            }
+            else
+            {
+                var Res = new Models.ConsoleCreateUser.ConsoleCreateUserRs
+                {
+                    requestId = consoleCreateUserRq.requestId,
+                    responseCode = "1002",
+                    responseMsg = "Unauthorized application"
+                };
+
+                return StatusCode(401, Res);
+            }
+
+            // Change Authen Type to Basic //
+
             string method = "CreateUserforRedcross";
 
             try
@@ -369,7 +415,7 @@ namespace JWTAuthentication.Controllers
         public bool DeleteUserfromConsole(string idcard)
         {
             var data = _context.UserDetails.Where(a => a.UTel1 == idcard).FirstOrDefault();
-            var status = _context.UstatusDetails.Where(a => a.Name == "ห้ามใช้").FirstOrDefault();
+            var status = _context.UstatusDetails.Where(a => a.Id == "000").FirstOrDefault();
 
             if (data != null && status != null)
             {
