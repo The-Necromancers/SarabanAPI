@@ -37,36 +37,14 @@ namespace JWTAuthentication.Controllers
         [Route("CreateUserforRedcross")]
         public ActionResult<ConsoleCreateUserRs> CreateUserforRedcross(ConsoleCreateUserRq consoleCreateUserRq)
         {
-            // Change Authen Type to Basic //
+            // Change Authen Type to Static Token //
 
-            string authorize = Request.Headers["Authorization"];
-            string username = _configuration.GetSection("BasicAuthen").GetSection("Username").Value;
-            string password = _configuration.GetSection("BasicAuthen").GetSection("Password").Value;
+            string reqToken = Request.Headers["token"];
+            string getToken = _configuration.GetSection("AccessToken").GetSection("Token").Value;
 
-            if (authorize != null)
+            if (reqToken != null && reqToken == getToken)
             {
-                string item = authorize.Replace("Basic ", "");
-                byte[] data = Convert.FromBase64String(item);
-                string decode = Encoding.UTF8.GetString(data);
-                string[] arr = decode.Split(':');
-                string user = arr[0];
-                string pwd = arr[1];
 
-                if (user == username && pwd == password)
-                {
-                    
-                }
-                else
-                {
-                    var Res = new Models.ConsoleCreateUser.ConsoleCreateUserRs
-                    {
-                        requestId = consoleCreateUserRq.requestId,
-                        responseCode = "1002",
-                        responseMsg = "Unauthorized application"
-                    };
-
-                    return StatusCode(401, Res);
-                }
             }
             else
             {
@@ -80,7 +58,7 @@ namespace JWTAuthentication.Controllers
                 return StatusCode(401, Res);
             }
 
-            // Change Authen Type to Basic //
+            // Change Authen Type to Static Token //
 
             string method = "CreateUserforRedcross";
 
