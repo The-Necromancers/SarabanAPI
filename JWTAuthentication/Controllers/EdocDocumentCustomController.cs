@@ -25,6 +25,8 @@ using JWTAuthentication.Models.EdocDocumentTracking;
 using JWTAuthentication.Models.EdocDocumentUpload;
 using JWTAuthentication.Models.EdocDocumentUpdateUserInfo;
 using JWTAuthentication.Models.EdocDocumentGetBasketInfo;
+using JWTAuthentication.Models.EdocDocumentReceive;
+using JWTAuthentication.Models.EdocDocumentInternal;
 using JWTAuthentication.Models.DoccirCreation;
 using JWTAuthentication.Models.DoccirDetail;
 using JWTAuthentication.Models.ResponseMsg;
@@ -38,6 +40,8 @@ using Microsoft.VisualBasic;
 using System.Security.Cryptography;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using JWTAuthentication.Models.EdocDocumentPeriod;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace JWTAuthentication.Controllers
 {
@@ -98,7 +102,7 @@ namespace JWTAuthentication.Controllers
                     {
                         userBid = userMainBid.Bid;
                     }
-                    
+
                 }
                 else
                 {
@@ -460,7 +464,7 @@ namespace JWTAuthentication.Controllers
             try
             {
                 var rawData = edocDocUpdateUserInfoRq.RqDetail;
-                List<string> uidSuccess = new ();
+                List<string> uidSuccess = new();
                 List<string> uidUnsuccess = new();
 
                 //********** check bid **********//
@@ -594,7 +598,7 @@ namespace JWTAuthentication.Controllers
 
                 var listUserBid = new List<object>();
 
-                for(int i = 0; i < dataUser.Count; i++)
+                for (int i = 0; i < dataUser.Count; i++)
                 {
                     var data = _context.Basketinfos.Where(a => a.Bid == dataUser[i]).FirstOrDefault();
                     listUserBid.Add(data);
@@ -700,7 +704,7 @@ namespace JWTAuthentication.Controllers
                 {
                     var dataWorkinProc = _context.Workinprocesses.Where(a => a.Wid == rawData.WID && a.Bid == userBid).FirstOrDefault();
 
-                    if(dataWorkinProc == null)
+                    if (dataWorkinProc == null)
                     {
                         var responseMsg = CheckData(method, edocDocSendRqCustom.RqHeader.AppId, "1");
 
@@ -858,6 +862,504 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        //AOT//
+
+        [Authorize]
+        [HttpGet]
+        [Route("GetBasketInfoforAOT")]
+        public ActionResult<EdocDocGetBasketInfoRs> GetBasketInfoforAOT([Required] string appID)
+        {
+            string method = "GetBasketInfoforAOT";
+            try
+            {
+                var data = _context.Basketinfos;
+                var basketInfoDetail = new List<RsBasketInfoDetail>();
+
+                foreach (Basketinfo basketinfo in data)
+                {
+                    basketInfoDetail.Add(new RsBasketInfoDetail
+                    {
+                        BasketID = basketinfo.Bid,
+                        Detail = basketinfo.Bdsc
+                    });
+                }
+
+                var ret = new Models.EdocDocumentGetBasketInfo.RsDetail
+                {
+                    BasketInfoDetail = basketInfoDetail
+                };
+                var res = new EdocDocGetBasketInfoRs
+                {
+                    RsHeader = new Models.EdocDocumentGetBasketInfo.RsHeader
+                    {
+                        AppId = appID,
+                        Status = new Models.EdocDocumentGetBasketInfo.RsHeaderStatus
+                        {
+                            OrgStatusCode = "0",
+                            OrgStatusDesc = "Success",
+                            StatusCode = "0"
+                        }
+
+                    },
+                    RsDetail = ret
+                };
+
+                CreateLog(method, "Success", appID);
+
+                return StatusCode(200, res);
+            }
+            catch (Exception ex)
+            {
+                var res = new EdocDocGetBasketInfoRs
+                {
+                    RsHeader = new Models.EdocDocumentGetBasketInfo.RsHeader
+                    {
+                        AppId = appID,
+                        Status = new Models.EdocDocumentGetBasketInfo.RsHeaderStatus
+                        {
+                            OrgStatusCode = "Error999",
+                            OrgStatusDesc = ex.Message,
+                            StatusCode = "-1"
+                        }
+                    },
+                    RsDetail = null
+                };
+
+                CreateLog(method, "Error999 - " + ex.Message, appID);
+
+                return StatusCode(400, res);
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("DocumentIncomingforAOT")]
+        public ActionResult<EdocDocIncomingRs> DocumentIncomingforAOT([Required][StringLength(13, MinimumLength = 13)] string basketID, [Required] string appID)
+        {
+            string method = "DocumentIncomingforAOT";
+            try
+            {
+                _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
+                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == basketID).FirstOrDefault();
+
+                if (dataBasketInfo == null)
+                {
+                    var responseMsg = CheckBasketinfo(method, appID);
+
+                    return StatusCode(400, responseMsg);
+                }
+
+                var paramBid = new SqlParameter("@bid", dataBasketInfo.Bid);
+                var strSql = "SELECT t1.* FROM workinfo AS t1, workinprocess AS t2 WHERE (t1.wid = t2.wid) AND (t2.bid = @bid) AND " +
+                             "(((t2.statecode < '03' OR t2.statecode = '12') AND (t2.registerno = '-')) OR (t2.registerno <> '-' AND " +
+                             "t2.statecode = '00' AND t2.usrid = '-'))";
+
+                var data = _context.Workinfos.FromSqlRaw(strSql, paramBid).Select(a => a.Wid).Count();
+
+                if (data == 0)
+                {
+                    var responseMsg = CheckData(method, appID, "1");
+
+                    return StatusCode(400, responseMsg);
+                }
+                else
+                {
+                    var ret = new Models.EdocDocumentIncoming.RsDetailforAOT
+                    {
+                        Total = data.ToString(),
+                    };
+                    var res = new EdocDocIncomingRsforAOT
+                    {
+                        RsHeader = new Models.EdocDocumentIncoming.RsHeader
+                        {
+                            AppId = appID,
+                            Status = new Models.EdocDocumentIncoming.RsHeaderStatus
+                            {
+                                OrgStatusCode = "0",
+                                OrgStatusDesc = "Success",
+                                StatusCode = "0"
+                            }
+                        },
+                        RsDetailforAOT = ret
+                    };
+
+                    CreateLog(method, "Success", appID);
+
+                    return StatusCode(200, res);
+                }
+            }
+            catch (Exception ex)
+            {
+                var res = new EdocDocIncomingRs
+                {
+                    RsHeader = new Models.EdocDocumentIncoming.RsHeader
+                    {
+                        AppId = appID,
+                        Status = new Models.EdocDocumentIncoming.RsHeaderStatus
+                        {
+                            OrgStatusCode = "Error999",
+                            OrgStatusDesc = ex.Message,
+                            StatusCode = "-1"
+                        }
+                    },
+                    RsDetail = null
+                };
+
+                CreateLog(method, "Error999 - " + ex.Message, appID);
+
+                return StatusCode(400, res);
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("DocumentPendingforAOT")]
+        public ActionResult<EdocDocInprocRs> DocumentPendingforAOT([Required][StringLength(13, MinimumLength = 13)] string basketID, [Required] string appID)
+        {
+            string method = "DocumentPendingforAOT";
+            try
+            {
+                _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
+                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == basketID).FirstOrDefault();
+
+                if (dataBasketInfo == null)
+                {
+                    var responseMsg = CheckBasketinfo(method, appID);
+
+                    return StatusCode(400, responseMsg);
+                }
+
+                string searchDate = GetDaypast();
+
+                var paramBid = new SqlParameter("@bid", dataBasketInfo.Bid);
+                var paramBackDate = new SqlParameter("@backdate", searchDate);
+                var strSql = "SELECT t1.* FROM workinprocess AS t2, workinfo AS t1 WHERE (t1.wid = t2.wid) AND (t2.bid = @bid) AND " +
+                             "((t2.statecode < '03') AND (t2.statecode <> '00') AND (t2.registerno <> '-') AND (t2.viewstatus <> '0')) " +
+                             "AND (t1.wtype = '01' or t1.wtype = '00' or (t1.wtype = '02' and t2.bid = @bid and t1.registerbid <> @bid)) AND (t2.initdate >= @backdate)";
+
+                //********** check data **********//
+                var data = _context.Workinfos.FromSqlRaw(strSql, paramBid, paramBackDate).Select(a => a.Wid).Count();
+
+                if (data == 0)
+                {
+                    var responseMsg = CheckData(method, appID, "1");
+
+                    return StatusCode(400, responseMsg);
+                }
+                else
+                {
+                    var ret = new Models.EdocDocumentInproc.RsDetailforAOT
+                    {
+                        Total = data.ToString(),
+                    };
+                    var res = new EdocDocInprocRsforAOT
+                    {
+                        RsHeader = new Models.EdocDocumentInproc.RsHeader
+                        {
+                            AppId = appID,
+                            Status = new Models.EdocDocumentInproc.RsHeaderStatus
+                            {
+                                OrgStatusCode = "0",
+                                OrgStatusDesc = "Success",
+                                StatusCode = "0"
+                            }
+                        },
+                        RsDetailforAOT = ret
+                    };
+
+                    CreateLog(method, "Success", appID);
+
+                    return StatusCode(200, res);
+                }
+            }
+            catch (Exception ex)
+            {
+                var res = new EdocDocInprocRs
+                {
+                    RsHeader = new Models.EdocDocumentInproc.RsHeader
+                    {
+                        AppId = appID,
+                        Status = new Models.EdocDocumentInproc.RsHeaderStatus
+                        {
+                            OrgStatusCode = "Error999",
+                            OrgStatusDesc = ex.Message,
+                            StatusCode = "-1"
+                        }
+                    },
+                    RsDetail = null
+                };
+
+                CreateLog(method, "Error999 - " + ex.Message, appID);
+
+                return StatusCode(400, res);
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("DocumentReceiveforAOT")]
+        public ActionResult<EdocDocReceiveRsforAOT> DocumentReceiveforAOT([Required][StringLength(13, MinimumLength = 13)] string basketID, [Required] string appID)
+        {
+            string method = "DocumentReceiveforAOT";
+            try
+            {
+                _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
+                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == basketID).FirstOrDefault();
+
+                if (dataBasketInfo == null)
+                {
+                    var responseMsg = CheckBasketinfo(method, appID);
+
+                    return StatusCode(400, responseMsg);
+                }
+
+                string searchDate = GetDaypast();
+
+                var paramBid = new SqlParameter("@bid", dataBasketInfo.Bid);
+                var paramBackDate = new SqlParameter("@backdate", searchDate);
+                var strSql = "SELECT t2.* FROM workinfo AS t1,workinprocess AS t2 WHERE ((t2.bid = @bid AND t1.wtype = '01') OR " +
+                             "(t1.wtype = '00' AND t2.bid = @bid AND t1.registerbid <> @bid) OR (t1.wtype = '02' AND t2.bid = @bid AND t1.registerbid <> @bid)) AND " +
+                             "t2.bid = @bid AND t1.wid = t2.wid and t2.initdate >= @backdate AND t2.registerno <> '-'";
+
+                //********** check data **********//
+                var data = _context.Workinfos.FromSqlRaw(strSql, paramBid, paramBackDate).Select(a => a.Wid).Count();
+
+                if (data == 0)
+                {
+                    var responseMsg = CheckData(method, appID, "1");
+
+                    return StatusCode(400, responseMsg);
+                }
+                else
+                {
+                    var ret = new Models.EdocDocumentReceive.RsDetailforAOT
+                    {
+                        Total = data.ToString(),
+                    };
+                    var res = new EdocDocReceiveRsforAOT
+                    {
+                        RsHeader = new Models.EdocDocumentReceive.RsHeader
+                        {
+                            AppId = appID,
+                            Status = new Models.EdocDocumentReceive.RsHeaderStatus
+                            {
+                                OrgStatusCode = "0",
+                                OrgStatusDesc = "Success",
+                                StatusCode = "0"
+                            }
+                        },
+                        RsDetailforAOT = ret
+                    };
+
+                    CreateLog(method, "Success", appID);
+
+                    return StatusCode(200, res);
+                }
+            }
+            catch (Exception ex)
+            {
+                var res = new EdocDocReceiveRsforAOT
+                {
+                    RsHeader = new Models.EdocDocumentReceive.RsHeader
+                    {
+                        AppId = appID,
+                        Status = new Models.EdocDocumentReceive.RsHeaderStatus
+                        {
+                            OrgStatusCode = "Error999",
+                            OrgStatusDesc = ex.Message,
+                            StatusCode = "-1"
+                        }
+                    },
+                    RsDetailforAOT = null
+                };
+
+                CreateLog(method, "Error999 - " + ex.Message, appID);
+
+                return StatusCode(400, res);
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("DocumentInternalforAOT")]
+        public ActionResult<EdocDocInternalRsforAOT> DocumentInternalforAOT([Required][StringLength(13, MinimumLength = 13)] string basketID, [Required] string appID)
+        {
+            string method = "DocumentInternalforAOT";
+            try
+            {
+                _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
+                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == basketID).FirstOrDefault();
+
+                if (dataBasketInfo == null)
+                {
+                    var responseMsg = CheckBasketinfo(method, appID);
+
+                    return StatusCode(400, responseMsg);
+                }
+
+                string searchDate = GetDaypast();
+
+                var paramBid = new SqlParameter("@bid", dataBasketInfo.Bid);
+                var paramBackDate = new SqlParameter("@backdate", searchDate);
+                var strSql = "SELECT t2.* FROM workinfo AS t1, workinprocess AS t2 WHERE (t1.wid = t2.wid) AND (t2.bid = @bid) AND (t1.wtype = '00') AND t1.registerbid = @bid and t2.initdate >= @backdate";
+
+                //********** check data **********//
+                var data = _context.Workinfos.FromSqlRaw(strSql, paramBid, paramBackDate).Select(a => a.Wid).Count();
+
+                if (data == 0)
+                {
+                    var responseMsg = CheckData(method, appID, "1");
+
+                    return StatusCode(400, responseMsg);
+                }
+                else
+                {
+                    var ret = new Models.EdocDocumentInternal.RsDetailforAOT
+                    {
+                        Total = data.ToString(),
+                    };
+                    var res = new EdocDocInternalRsforAOT
+                    {
+                        RsHeader = new Models.EdocDocumentInternal.RsHeader
+                        {
+                            AppId = appID,
+                            Status = new Models.EdocDocumentInternal.RsHeaderStatus
+                            {
+                                OrgStatusCode = "0",
+                                OrgStatusDesc = "Success",
+                                StatusCode = "0"
+                            }
+                        },
+                        RsDetailforAOT = ret
+                    };
+
+                    CreateLog(method, "Success", appID);
+
+                    return StatusCode(200, res);
+                }
+            }
+            catch (Exception ex)
+            {
+                var res = new EdocDocInternalRsforAOT
+                {
+                    RsHeader = new Models.EdocDocumentInternal.RsHeader
+                    {
+                        AppId = appID,
+                        Status = new Models.EdocDocumentInternal.RsHeaderStatus
+                        {
+                            OrgStatusCode = "Error999",
+                            OrgStatusDesc = ex.Message,
+                            StatusCode = "-1"
+                        }
+                    },
+                    RsDetailforAOT = null
+                };
+
+                CreateLog(method, "Error999 - " + ex.Message, appID);
+
+                return StatusCode(400, res);
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("DocumentPeriodforAOT")]
+        public ActionResult<EdocDocPeriodRsforAOT> DocumentPeriodforAOT([Required][StringLength(13, MinimumLength = 13)] string basketID, [Required] string appID)
+        {
+            string method = "DocumentPeriodforAOT";
+            try
+            {
+                _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
+                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == basketID).FirstOrDefault();
+
+                if (dataBasketInfo == null)
+                {
+                    var responseMsg = CheckBasketinfo(method, appID);
+
+                    return StatusCode(400, responseMsg);
+                }
+
+                string searchDate = GetDaypast();
+
+                var paramBid = new SqlParameter("@bid", dataBasketInfo.Bid);
+                var paramBackDate = new SqlParameter("@backdate", searchDate);
+                var strSql = "SELECT top 50 t1.* FROM workinprocess AS t2, workinfo AS t1 WHERE (t1.wid = t2.wid) AND (t2.bid = @bid) AND " +
+                             "((t2.statecode < '03') AND (t2.statecode <> '00') AND (t2.registerno <> '-') AND (t2.viewstatus <> '0')) " +
+                             "AND (t1.wtype = '01' or t1.wtype = '00' or (t1.wtype = '02' and t2.bid = @bid and t1.registerbid <> @bid)) AND (t2.initdate >= @backdate)";
+
+                //********** check data **********//
+                var data = _context.Workinfos.FromSqlRaw(strSql, paramBid, paramBackDate).ToList();
+
+                if (data == null)
+                {
+                    var responseMsg = CheckData(method, appID, "1");
+
+                    return StatusCode(400, responseMsg);
+                }
+                else
+                {
+                    var setDetail = new List<RsDocumentDetail>();
+
+                    foreach(var item in data)
+                    {
+                        setDetail.Add(new RsDocumentDetail()
+                        {
+                            BasketID = basketID,
+                            WID = item.Wid,
+                            Receiver = item.RegisterUid,
+                            ReceiveDate = item.RegisterDate,
+                            Duration = GetPeriod(item.RegisterDate),
+                            Status = "ระหว่างดำเนินการ"
+                        });
+                    }
+
+                    var ret = new Models.EdocDocumentPeriod.RsDetailforAOT
+                    {
+                        rsDocumentDetails = setDetail
+                    };
+                    var res = new EdocDocPeriodRsforAOT
+                    {
+                        RsHeader = new Models.EdocDocumentPeriod.RsHeader
+                        {
+                            AppId = appID,
+                            Status = new Models.EdocDocumentPeriod.RsHeaderStatus
+                            {
+                                OrgStatusCode = "0",
+                                OrgStatusDesc = "Success",
+                                StatusCode = "0"
+                            }
+                        },
+                        RsDetailforAOT = ret
+                    };
+
+                    CreateLog(method, "Success", appID);
+
+                    return StatusCode(200, res);
+                }
+            }
+            catch (Exception ex)
+            {
+                var res = new EdocDocInprocRs
+                {
+                    RsHeader = new Models.EdocDocumentInproc.RsHeader
+                    {
+                        AppId = appID,
+                        Status = new Models.EdocDocumentInproc.RsHeaderStatus
+                        {
+                            OrgStatusCode = "Error999",
+                            OrgStatusDesc = ex.Message,
+                            StatusCode = "-1"
+                        }
+                    },
+                    RsDetail = null
+                };
+
+                CreateLog(method, "Error999 - " + ex.Message, appID);
+
+                return StatusCode(400, res);
+            }
+        }
+
         #endregion
 
         //Method for API//
@@ -973,6 +1475,36 @@ namespace JWTAuthentication.Controllers
                 };
 
                 CreateLog(method, "Error003 - invalid username", appID);
+
+                return detailRs;
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        public object CheckBasketinfo(string method, string appID)
+        {
+            try
+            {
+                var detailRs = new ResponseMsgRs
+                {
+                    RsHeader = new Models.ResponseMsg.RsHeader
+                    {
+                        AppId = appID,
+                        Status = new Models.ResponseMsg.RsHeaderStatus
+                        {
+                            OrgStatusCode = "Error005",
+                            OrgStatusDesc = "basketid not found",
+                            StatusCode = "-1"
+                        }
+                    },
+                    RsDetail = null
+                };
+
+                CreateLog(method, "Error005 - basketid not found", appID);
 
                 return detailRs;
             }
@@ -1992,7 +2524,7 @@ namespace JWTAuthentication.Controllers
                 workinProc.CompleteDate = receiveDate;
                 workinProc.CompleteTime = receiveTime;
                 _context.SaveChanges();
-                
+
                 var workinProcess = _context.Workinprocesses.Where(a => a.Wid == wid && a.Bid == receiverBid && a.Usrid == "-").FirstOrDefault();
                 var workinProcessDup = _context.Workinprocesses.Where(a => a.Wid == wid && a.Bid == receiverBid).FirstOrDefault();
                 var userInfo = _context.Userinfos.Where(a => a.Bid == receiverBid && a.Usrid == receiver).FirstOrDefault();
@@ -2149,7 +2681,7 @@ namespace JWTAuthentication.Controllers
             try
             {
                 var data = _context_cabinet.FlwCabinets.Where(a => a.RdbmsStatus == "01").OrderByDescending(a => a.CabName).Select(a => a.RdbmsDatabasename).ToList();
-                
+
                 return data;
             }
             catch (Exception)
@@ -2372,7 +2904,7 @@ namespace JWTAuthentication.Controllers
             }
             else
             {
-                _context.Database.GetDbConnection().ConnectionString = GetConnectionString();  
+                _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
             }
 
             if (!string.IsNullOrWhiteSpace(wid) && string.IsNullOrWhiteSpace(regNumber) && string.IsNullOrWhiteSpace(workType) && string.IsNullOrWhiteSpace(bookGroup))
@@ -2501,7 +3033,7 @@ namespace JWTAuthentication.Controllers
                         }
                     }
                 }
-                
+
                 if (workType == "02")
                 {
                     result = "0";
@@ -2568,6 +3100,46 @@ namespace JWTAuthentication.Controllers
 
                 throw;
             }
+        }
+
+        public string GetDaypast()
+        {
+            var daysPast = int.Parse(_configuration.GetSection("MySettings").GetSection("DaysPast").Value);
+            var curDate = DateTime.Now.ToString("yyyy-MM-dd");
+            DateTime startDate = DateTime.Parse(curDate);
+
+            var backDate = startDate.AddDays(-daysPast);
+            var stry = backDate.ToString("yyyy-MM-dd").Substring(0, 4);
+            var strm = backDate.ToString("yyyy-MM-dd").Substring(5, 2);
+            var strd = backDate.ToString("yyyy-MM-dd").Substring(8, 2);
+
+            if (int.Parse(stry) < 2500)
+            {
+                stry = (int.Parse(stry) + 543).ToString();
+            }
+            if (strm.Length == 1)
+            {
+                strm = "0" + strm;
+            }
+            if (strd.Length == 1)
+            {
+                strd = "0" + strm;
+            }
+
+            string result = stry + "/" + strm + "/" + strd;
+
+            return result;
+        }
+
+        public string GetPeriod(string date)
+        {
+            string strDate = DateTime.Now.ToString("yyyy-MM-dd", new CultureInfo("th-TH"));
+            DateTime curDate = DateTime.Parse(strDate);
+            DateTime pastDate = DateTime.Parse(date);
+            var totalDate = (curDate - pastDate).TotalDays;
+            string result = totalDate.ToString();
+
+            return result;
         }
 
         #endregion

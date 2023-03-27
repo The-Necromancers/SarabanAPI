@@ -326,7 +326,7 @@ namespace JWTAuthentication.Controllers
                 _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
                 var dataUser = _context.Userinfos.Where(a => a.Usrid == usrID && a.Mainbid == "0").FirstOrDefault();
 
-                if(dataUser == null)
+                if (dataUser == null)
                 {
                     var responseMsg = CheckUser(method, appID);
 
@@ -913,7 +913,7 @@ namespace JWTAuthentication.Controllers
                 else
                 {
                     userBid = dataUser.Bid;
-                    username= dataUser.Username;
+                    username = dataUser.Username;
                 }
                 //********************************//
 
@@ -973,7 +973,7 @@ namespace JWTAuthentication.Controllers
             }
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpPost]
         [Route("DocumentUpload")]
         public ActionResult<EdocDocUploadRs> DocumentUpload(EdocDocUploadRq edocDocUploadRq)
@@ -2538,7 +2538,7 @@ namespace JWTAuthentication.Controllers
             fullName = fullName.Replace("\"", "//");
             string fn = IEncrypt2(fullName);
             string strURL = _configuration.GetSection("MySettings").GetSection("IwebflowSharename").Value + "/content/viewext.asp?fn=" + WebUtility.UrlEncode(fn) + "&ds=" + subject + "&ws=" + wid + "&usr=" + usr + "&wtm=true";
-            
+
             return strURL;
         }
 
@@ -2625,7 +2625,7 @@ namespace JWTAuthentication.Controllers
             }
 
             string strRegMode = "0";
-            
+
             if (string.IsNullOrWhiteSpace(rawData.DocDate))
             {
                 rawData.DocDate = DateTime.Now.ToString("yyyy/MM/dd", new CultureInfo("th-TH"));
@@ -2686,7 +2686,7 @@ namespace JWTAuthentication.Controllers
                             strRegNo = strRegNo + "0";
                         }
                     }
-                    
+
                     string itemNo = dr[2].ToString().Trim();
                     string docuname = dr[3].ToString().Trim();
                     string wid = rawData.WID;
@@ -3333,7 +3333,7 @@ namespace JWTAuthentication.Controllers
                         { "03", "ด่วนที่สุด"}
                     };
 
-                    msgLog = msgLog + System.Environment.NewLine + "แก้ไขชั้นความเร็ว จาก " + priorityText["" + priority  + ""] + " เป็น " + priorityText["" + rawData.Priority + ""];
+                    msgLog = msgLog + System.Environment.NewLine + "แก้ไขชั้นความเร็ว จาก " + priorityText["" + priority + ""] + " เป็น " + priorityText["" + rawData.Priority + ""];
                     string strPriority = "ชั้นความเร็ว :จาก " + priorityText["" + priority + ""] + " เป็น " + priorityText["" + rawData.Priority + ""] + "";
                     index.Add(strPriority);
                     priority = rawData.Priority;
@@ -3540,7 +3540,7 @@ namespace JWTAuthentication.Controllers
 
                 throw;
             }
-            
+
         }
 
         public string GetConnectionString()
@@ -3567,7 +3567,7 @@ namespace JWTAuthentication.Controllers
 
                 throw;
             }
-            
+
         }
 
         public string SetConnectionString(string year)
@@ -3633,7 +3633,7 @@ namespace JWTAuthentication.Controllers
 
                 throw;
             }
-            
+
         }
 
         public string SetSQLConnectionString()
@@ -3660,7 +3660,7 @@ namespace JWTAuthentication.Controllers
 
                 throw;
             }
-            
+
         }
 
         public string ConvertRegNotoNumber(string regNo)
@@ -3692,7 +3692,7 @@ namespace JWTAuthentication.Controllers
 
                 throw;
             }
-            
+
         }
 
         public string ConvertNumbertoRegNo(string regNo)
@@ -3739,7 +3739,7 @@ namespace JWTAuthentication.Controllers
 
                 throw;
             }
-            
+
         }
 
         public bool CreateLog(string method, string errorMsg, string appID)
@@ -3826,7 +3826,7 @@ namespace JWTAuthentication.Controllers
             byte[] Data = Encoding.ASCII.GetBytes(Message);
             var sha = System.Security.Cryptography.SHA1.Create();
             byte[] encryptData = sha.ComputeHash(Data);
-            
+
             return encryptData;
         }
 
