@@ -872,6 +872,7 @@ namespace JWTAuthentication.Controllers
             string method = "GetBasketInfoforAOT";
             try
             {
+                _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
                 var data = _context.Basketinfos;
                 var basketInfoDetail = new List<RsBasketInfoDetail>();
 
@@ -934,17 +935,18 @@ namespace JWTAuthentication.Controllers
         [Authorize]
         [HttpGet]
         [Route("DocumentIncomingforAOT")]
-        public ActionResult<EdocDocIncomingRs> DocumentIncomingforAOT([Required][StringLength(13, MinimumLength = 13)] string basketID, [Required] string appID)
+        public ActionResult<EdocDocIncomingRsforAOT> DocumentIncomingforAOT(EdocDocIncomingRq edocDocIncomingRq)
         {
             string method = "DocumentIncomingforAOT";
             try
             {
+                var rawData = edocDocIncomingRq.RqDetail;
                 _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
-                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == basketID).FirstOrDefault();
+                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == rawData.BasketID).FirstOrDefault();
 
                 if (dataBasketInfo == null)
                 {
-                    var responseMsg = CheckBasketinfo(method, appID);
+                    var responseMsg = CheckBasketinfo(method, edocDocIncomingRq.RqHeader.AppId);
 
                     return StatusCode(400, responseMsg);
                 }
@@ -958,7 +960,7 @@ namespace JWTAuthentication.Controllers
 
                 if (data == 0)
                 {
-                    var responseMsg = CheckData(method, appID, "1");
+                    var responseMsg = CheckData(method, edocDocIncomingRq.RqHeader.AppId, "1");
 
                     return StatusCode(400, responseMsg);
                 }
@@ -972,7 +974,7 @@ namespace JWTAuthentication.Controllers
                     {
                         RsHeader = new Models.EdocDocumentIncoming.RsHeader
                         {
-                            AppId = appID,
+                            AppId = edocDocIncomingRq.RqHeader.AppId,
                             Status = new Models.EdocDocumentIncoming.RsHeaderStatus
                             {
                                 OrgStatusCode = "0",
@@ -983,7 +985,7 @@ namespace JWTAuthentication.Controllers
                         RsDetailforAOT = ret
                     };
 
-                    CreateLog(method, "Success", appID);
+                    CreateLog(method, "Success", edocDocIncomingRq.RqHeader.AppId);
 
                     return StatusCode(200, res);
                 }
@@ -994,7 +996,7 @@ namespace JWTAuthentication.Controllers
                 {
                     RsHeader = new Models.EdocDocumentIncoming.RsHeader
                     {
-                        AppId = appID,
+                        AppId = edocDocIncomingRq.RqHeader.AppId,
                         Status = new Models.EdocDocumentIncoming.RsHeaderStatus
                         {
                             OrgStatusCode = "Error999",
@@ -1005,7 +1007,7 @@ namespace JWTAuthentication.Controllers
                     RsDetail = null
                 };
 
-                CreateLog(method, "Error999 - " + ex.Message, appID);
+                CreateLog(method, "Error999 - " + ex.Message, edocDocIncomingRq.RqHeader.AppId);
 
                 return StatusCode(400, res);
             }
@@ -1014,17 +1016,18 @@ namespace JWTAuthentication.Controllers
         [Authorize]
         [HttpGet]
         [Route("DocumentPendingforAOT")]
-        public ActionResult<EdocDocInprocRs> DocumentPendingforAOT([Required][StringLength(13, MinimumLength = 13)] string basketID, [Required] string appID)
+        public ActionResult<EdocDocInprocRsforAOT> DocumentPendingforAOT(EdocDocInprocRq edocDocInprocRq)
         {
             string method = "DocumentPendingforAOT";
             try
             {
+                var rawData = edocDocInprocRq.RqDetail;
                 _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
-                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == basketID).FirstOrDefault();
+                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == rawData.BasketID).FirstOrDefault();
 
                 if (dataBasketInfo == null)
                 {
-                    var responseMsg = CheckBasketinfo(method, appID);
+                    var responseMsg = CheckBasketinfo(method, edocDocInprocRq.RqHeader.AppId);
 
                     return StatusCode(400, responseMsg);
                 }
@@ -1042,7 +1045,7 @@ namespace JWTAuthentication.Controllers
 
                 if (data == 0)
                 {
-                    var responseMsg = CheckData(method, appID, "1");
+                    var responseMsg = CheckData(method, edocDocInprocRq.RqHeader.AppId, "1");
 
                     return StatusCode(400, responseMsg);
                 }
@@ -1056,7 +1059,7 @@ namespace JWTAuthentication.Controllers
                     {
                         RsHeader = new Models.EdocDocumentInproc.RsHeader
                         {
-                            AppId = appID,
+                            AppId = edocDocInprocRq.RqHeader.AppId,
                             Status = new Models.EdocDocumentInproc.RsHeaderStatus
                             {
                                 OrgStatusCode = "0",
@@ -1067,7 +1070,7 @@ namespace JWTAuthentication.Controllers
                         RsDetailforAOT = ret
                     };
 
-                    CreateLog(method, "Success", appID);
+                    CreateLog(method, "Success", edocDocInprocRq.RqHeader.AppId);
 
                     return StatusCode(200, res);
                 }
@@ -1078,7 +1081,7 @@ namespace JWTAuthentication.Controllers
                 {
                     RsHeader = new Models.EdocDocumentInproc.RsHeader
                     {
-                        AppId = appID,
+                        AppId = edocDocInprocRq.RqHeader.AppId,
                         Status = new Models.EdocDocumentInproc.RsHeaderStatus
                         {
                             OrgStatusCode = "Error999",
@@ -1089,7 +1092,7 @@ namespace JWTAuthentication.Controllers
                     RsDetail = null
                 };
 
-                CreateLog(method, "Error999 - " + ex.Message, appID);
+                CreateLog(method, "Error999 - " + ex.Message, edocDocInprocRq.RqHeader.AppId);
 
                 return StatusCode(400, res);
             }
@@ -1098,17 +1101,18 @@ namespace JWTAuthentication.Controllers
         [Authorize]
         [HttpGet]
         [Route("DocumentReceiveforAOT")]
-        public ActionResult<EdocDocReceiveRsforAOT> DocumentReceiveforAOT([Required][StringLength(13, MinimumLength = 13)] string basketID, [Required] string appID)
+        public ActionResult<EdocDocReceiveRsforAOT> DocumentReceiveforAOT(EdocDocReceiveRq edocDocReceiveRq)
         {
             string method = "DocumentReceiveforAOT";
             try
             {
+                var rawData = edocDocReceiveRq.RqDetail;
                 _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
-                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == basketID).FirstOrDefault();
+                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == rawData.BasketID).FirstOrDefault();
 
                 if (dataBasketInfo == null)
                 {
-                    var responseMsg = CheckBasketinfo(method, appID);
+                    var responseMsg = CheckBasketinfo(method, edocDocReceiveRq.RqHeader.AppId);
 
                     return StatusCode(400, responseMsg);
                 }
@@ -1126,7 +1130,7 @@ namespace JWTAuthentication.Controllers
 
                 if (data == 0)
                 {
-                    var responseMsg = CheckData(method, appID, "1");
+                    var responseMsg = CheckData(method, edocDocReceiveRq.RqHeader.AppId, "1");
 
                     return StatusCode(400, responseMsg);
                 }
@@ -1140,7 +1144,7 @@ namespace JWTAuthentication.Controllers
                     {
                         RsHeader = new Models.EdocDocumentReceive.RsHeader
                         {
-                            AppId = appID,
+                            AppId = edocDocReceiveRq.RqHeader.AppId,
                             Status = new Models.EdocDocumentReceive.RsHeaderStatus
                             {
                                 OrgStatusCode = "0",
@@ -1151,7 +1155,7 @@ namespace JWTAuthentication.Controllers
                         RsDetailforAOT = ret
                     };
 
-                    CreateLog(method, "Success", appID);
+                    CreateLog(method, "Success", edocDocReceiveRq.RqHeader.AppId);
 
                     return StatusCode(200, res);
                 }
@@ -1162,7 +1166,7 @@ namespace JWTAuthentication.Controllers
                 {
                     RsHeader = new Models.EdocDocumentReceive.RsHeader
                     {
-                        AppId = appID,
+                        AppId = edocDocReceiveRq.RqHeader.AppId,
                         Status = new Models.EdocDocumentReceive.RsHeaderStatus
                         {
                             OrgStatusCode = "Error999",
@@ -1173,7 +1177,7 @@ namespace JWTAuthentication.Controllers
                     RsDetailforAOT = null
                 };
 
-                CreateLog(method, "Error999 - " + ex.Message, appID);
+                CreateLog(method, "Error999 - " + ex.Message, edocDocReceiveRq.RqHeader.AppId);
 
                 return StatusCode(400, res);
             }
@@ -1182,17 +1186,18 @@ namespace JWTAuthentication.Controllers
         [Authorize]
         [HttpGet]
         [Route("DocumentInternalforAOT")]
-        public ActionResult<EdocDocInternalRsforAOT> DocumentInternalforAOT([Required][StringLength(13, MinimumLength = 13)] string basketID, [Required] string appID)
+        public ActionResult<EdocDocInternalRsforAOT> DocumentInternalforAOT(EdocDocInternalRq edocDocInternalRq)
         {
             string method = "DocumentInternalforAOT";
             try
             {
+                var rawData = edocDocInternalRq.RqDetail;
                 _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
-                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == basketID).FirstOrDefault();
+                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == rawData.BasketID).FirstOrDefault();
 
                 if (dataBasketInfo == null)
                 {
-                    var responseMsg = CheckBasketinfo(method, appID);
+                    var responseMsg = CheckBasketinfo(method, edocDocInternalRq.RqHeader.AppId);
 
                     return StatusCode(400, responseMsg);
                 }
@@ -1208,7 +1213,7 @@ namespace JWTAuthentication.Controllers
 
                 if (data == 0)
                 {
-                    var responseMsg = CheckData(method, appID, "1");
+                    var responseMsg = CheckData(method, edocDocInternalRq.RqHeader.AppId, "1");
 
                     return StatusCode(400, responseMsg);
                 }
@@ -1222,7 +1227,7 @@ namespace JWTAuthentication.Controllers
                     {
                         RsHeader = new Models.EdocDocumentInternal.RsHeader
                         {
-                            AppId = appID,
+                            AppId = edocDocInternalRq.RqHeader.AppId,
                             Status = new Models.EdocDocumentInternal.RsHeaderStatus
                             {
                                 OrgStatusCode = "0",
@@ -1233,7 +1238,7 @@ namespace JWTAuthentication.Controllers
                         RsDetailforAOT = ret
                     };
 
-                    CreateLog(method, "Success", appID);
+                    CreateLog(method, "Success", edocDocInternalRq.RqHeader.AppId);
 
                     return StatusCode(200, res);
                 }
@@ -1244,7 +1249,7 @@ namespace JWTAuthentication.Controllers
                 {
                     RsHeader = new Models.EdocDocumentInternal.RsHeader
                     {
-                        AppId = appID,
+                        AppId = edocDocInternalRq.RqHeader.AppId,
                         Status = new Models.EdocDocumentInternal.RsHeaderStatus
                         {
                             OrgStatusCode = "Error999",
@@ -1255,7 +1260,7 @@ namespace JWTAuthentication.Controllers
                     RsDetailforAOT = null
                 };
 
-                CreateLog(method, "Error999 - " + ex.Message, appID);
+                CreateLog(method, "Error999 - " + ex.Message, edocDocInternalRq.RqHeader.AppId);
 
                 return StatusCode(400, res);
             }
@@ -1264,17 +1269,18 @@ namespace JWTAuthentication.Controllers
         [Authorize]
         [HttpGet]
         [Route("DocumentPeriodforAOT")]
-        public ActionResult<EdocDocPeriodRsforAOT> DocumentPeriodforAOT([Required][StringLength(13, MinimumLength = 13)] string basketID, [Required] string appID)
+        public ActionResult<EdocDocPeriodRsforAOT> DocumentPeriodforAOT(EdocDocPeriodRq edocDocPeriodRq)
         {
             string method = "DocumentPeriodforAOT";
             try
             {
+                var rawData = edocDocPeriodRq.RqDetail;
                 _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
-                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == basketID).FirstOrDefault();
+                var dataBasketInfo = _context.Basketinfos.Where(a => a.Bid == rawData.BasketID).FirstOrDefault();
 
                 if (dataBasketInfo == null)
                 {
-                    var responseMsg = CheckBasketinfo(method, appID);
+                    var responseMsg = CheckBasketinfo(method, edocDocPeriodRq.RqHeader.AppId);
 
                     return StatusCode(400, responseMsg);
                 }
@@ -1292,7 +1298,7 @@ namespace JWTAuthentication.Controllers
 
                 if (data == null)
                 {
-                    var responseMsg = CheckData(method, appID, "1");
+                    var responseMsg = CheckData(method, edocDocPeriodRq.RqHeader.AppId, "1");
 
                     return StatusCode(400, responseMsg);
                 }
@@ -1304,7 +1310,7 @@ namespace JWTAuthentication.Controllers
                     {
                         setDetail.Add(new RsDocumentDetail()
                         {
-                            BasketID = basketID,
+                            BasketID = rawData.BasketID,
                             WID = item.Wid,
                             Receiver = item.RegisterUid,
                             ReceiveDate = item.RegisterDate,
@@ -1321,7 +1327,7 @@ namespace JWTAuthentication.Controllers
                     {
                         RsHeader = new Models.EdocDocumentPeriod.RsHeader
                         {
-                            AppId = appID,
+                            AppId = edocDocPeriodRq.RqHeader.AppId,
                             Status = new Models.EdocDocumentPeriod.RsHeaderStatus
                             {
                                 OrgStatusCode = "0",
@@ -1332,7 +1338,7 @@ namespace JWTAuthentication.Controllers
                         RsDetailforAOT = ret
                     };
 
-                    CreateLog(method, "Success", appID);
+                    CreateLog(method, "Success", edocDocPeriodRq.RqHeader.AppId);
 
                     return StatusCode(200, res);
                 }
@@ -1343,7 +1349,7 @@ namespace JWTAuthentication.Controllers
                 {
                     RsHeader = new Models.EdocDocumentInproc.RsHeader
                     {
-                        AppId = appID,
+                        AppId = edocDocPeriodRq.RqHeader.AppId,
                         Status = new Models.EdocDocumentInproc.RsHeaderStatus
                         {
                             OrgStatusCode = "Error999",
@@ -1354,7 +1360,7 @@ namespace JWTAuthentication.Controllers
                     RsDetail = null
                 };
 
-                CreateLog(method, "Error999 - " + ex.Message, appID);
+                CreateLog(method, "Error999 - " + ex.Message, edocDocPeriodRq.RqHeader.AppId);
 
                 return StatusCode(400, res);
             }
