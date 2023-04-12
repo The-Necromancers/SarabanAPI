@@ -3767,7 +3767,7 @@ namespace JWTAuthentication.Controllers
         {
             string tmpDocuname = docuname.Trim();
             string[] pathArray = tmpDocuname.Split('\\');
-            string newDocuname = _configuration.GetSection("MySettings").GetSection("Flowdata").Value + "\\" + pathArray[4] + "\\" + pathArray[5] + "\\" + pathArray[6];
+            string newDocuname = _configuration.GetSection("MySettings").GetSection("Flowdata").Value + "\\" + pathArray[3] + "\\" + pathArray[4] + "\\" + pathArray[5] + "\\" + pathArray[6];
             string token = EncryptText(newDocuname, "inf0m@ECL62");
             string strURL = _configuration.GetSection("MySettings").GetSection("APIReader").Value + "/Verify.aspx?token=" + token + "";
 
