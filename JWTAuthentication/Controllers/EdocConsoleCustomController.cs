@@ -39,7 +39,7 @@ namespace JWTAuthentication.Controllers
         {
             // Change Authen Type to Static Token //
 
-            string reqToken = Request.Headers["token"];
+            string reqToken = Request.Headers["Authorization"];
             string getToken = _configuration.GetSection("AccessToken").GetSection("Token").Value;
 
             if (reqToken != null && reqToken == getToken)
@@ -77,7 +77,7 @@ namespace JWTAuthentication.Controllers
 
                 switch (mode)
                 {
-                    case "Add User":
+                    case "Create User":
 
                         bool resultCreate = CreateUserToConsole(idcard, fname, lname, fnameEng, lnameEng, email, empcode);
 
@@ -90,7 +90,7 @@ namespace JWTAuthentication.Controllers
                                 responseMsg = "Success"
                             };
 
-                            CreateLog(method, "Success", appId);
+                            CreateLog(method, "Success", appId, rawData.requestId, mode);
 
                             return StatusCode(200, addRes);
                         }
@@ -103,7 +103,7 @@ namespace JWTAuthentication.Controllers
                                 responseMsg = "Invalid data"
                             };
 
-                            CreateLog(method, "Invalid data", appId);
+                            CreateLog(method, "Invalid data - duplicate username", appId, rawData.requestId, mode);
 
                             return StatusCode(400, addRes);
                         }
@@ -121,7 +121,7 @@ namespace JWTAuthentication.Controllers
                                 responseMsg = "Success"
                             };
 
-                            CreateLog(method, "Success + " + resultUpdate.Item2 + "", appId);
+                            CreateLog(method, "Success + " + resultUpdate.Item2 + "", appId, rawData.requestId, mode);
 
                             return StatusCode(200, editRes);
                         }
@@ -134,7 +134,7 @@ namespace JWTAuthentication.Controllers
                                 responseMsg = "Invalid data"
                             };
 
-                            CreateLog(method, "Invalid data", appId);
+                            CreateLog(method, "Invalid data - duplicate username", appId, rawData.requestId, mode);
 
                             return StatusCode(400, editRes);
                         }
@@ -152,7 +152,7 @@ namespace JWTAuthentication.Controllers
                                 responseMsg = "Success"
                             };
 
-                            CreateLog(method, "Success", appId);
+                            CreateLog(method, "Success", appId, rawData.requestId, mode);
 
                             return StatusCode(200, deleteRes);
                         }
@@ -165,7 +165,7 @@ namespace JWTAuthentication.Controllers
                                 responseMsg = "Invalid data"
                             };
 
-                            CreateLog(method, "Invalid data", appId);
+                            CreateLog(method, "Invalid data - duplicate username", appId, rawData.requestId, mode);
 
                             return StatusCode(400, deleteRes);
                         }
@@ -178,7 +178,7 @@ namespace JWTAuthentication.Controllers
                             responseMsg = "Invalid data"
                         };
 
-                        CreateLog(method, "Invalid data", appId);
+                        CreateLog(method, "Invalid data - duplicate username", appId, rawData.requestId, mode);
 
                         return StatusCode(400, res);
                 }
@@ -188,12 +188,12 @@ namespace JWTAuthentication.Controllers
                 var appId = "1";
                 var res = new Models.ConsoleCreateUser.ConsoleCreateUserRs
                 {
-                    requestId = appId,
+                    requestId = consoleCreateUserRq.requestId,
                     responseCode = "9999",
                     responseMsg = ex.Message
                 };
 
-                CreateLog(method, "9999" + ex.Message, appId);
+                CreateLog(method, "9999" + ex.Message, appId, consoleCreateUserRq.requestId, consoleCreateUserRq.reqType);
 
                 return StatusCode(500, res);
             }
@@ -260,7 +260,7 @@ namespace JWTAuthentication.Controllers
             return result;
         }
 
-        public bool CreateLog(string method, string errorMsg, string appID)
+        public bool CreateLog(string method, string errorMsg, string appID, string reqID, string reqType)
         {
             try
             {
@@ -270,7 +270,7 @@ namespace JWTAuthentication.Controllers
                 }
                 var remoteIpAddress = Request.HttpContext.Connection.RemoteIpAddress;
                 var filename = "c:\\WebAPILog\\Console_api_" + DateTime.Now.ToString("yyyy-MM-dd", new CultureInfo("th-TH")) + ".txt";
-                System.IO.File.AppendAllText(filename, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", new CultureInfo("th-TH")) + " " + method + " " + "Request From appID =" + " " + "" + appID + "" + " " + "" + remoteIpAddress + "" + " " + "" + errorMsg + "" + Environment.NewLine);
+                System.IO.File.AppendAllText(filename, System.Environment.NewLine + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", new CultureInfo("th-TH")) + " " + "RequestID =" + " " + reqID + " " + method + " : " + reqType + System.Environment.NewLine + "Request From appID =" + " " + "" + appID + "" + " " + "" + remoteIpAddress + "" + " " + "" + errorMsg + "" + Environment.NewLine);
 
                 return true;
             }
@@ -322,45 +322,33 @@ namespace JWTAuthentication.Controllers
 
             if (data != null)
             {
-                if (fname.Contains("แก้ไข"))
+                if (data.Tname != fname)
                 {
-                    fname = fname.Replace("แก้ไข", "");
-                    fname = fname.Trim();
                     log = "แก้ไขชื่อ : จาก " + data.Tname + " เป็น " + fname + " ";
                 }
 
-                if (lname.Contains("แก้ไข"))
+                if (data.Tsurname != lname)
                 {
-                    lname = lname.Replace("แก้ไข", "");
-                    lname = lname.Trim();
                     log = log + "แก้ไขสกุล : จาก " + data.Tsurname + " เป็น " + lname + " ";
                 }
 
-                if (fnameEng.Contains("แก้ไข"))
+                if (data.Ename != fnameEng)
                 {
-                    fnameEng = fnameEng.Replace("แก้ไข", "");
-                    fnameEng = fnameEng.Trim();
                     log = log + "แก้ไขชื่ออังกฤษ : จาก " + data.Ename + " เป็น " + fnameEng + " ";
                 }
 
-                if (lnameEng.Contains("แก้ไข"))
+                if (data.Esurname != lnameEng)
                 {
-                    lnameEng = lnameEng.Replace("แก้ไข", "");
-                    lnameEng = lnameEng.Trim();
                     log = log + "แก้ไขสกุลอังกฤษ : จาก " + data.Esurname + " เป็น " + lnameEng + " ";
                 }
 
-                if (email.Contains("แก้ไข"))
+                if (data.UEmail != email)
                 {
-                    email = email.Replace("แก้ไข", "");
-                    email = email.Trim();
                     log = log + "แก้ไข email : จาก " + data.UEmail + " เป็น " + email + " ";
                 }
 
-                if (empcode.Contains("แก้ไข"))
+                if (data.UId1 != empcode)
                 {
-                    empcode = empcode.Replace("แก้ไข", "");
-                    empcode = empcode.Trim();
                     log = log + "แก้ไขรหัสพนักงาน : จาก " + data.UId1 + " เป็น " + empcode + " ";
                 }
 
