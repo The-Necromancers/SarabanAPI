@@ -67,6 +67,7 @@ namespace JWTAuthentication.Controllers
                 var rawData = consoleCreateUserRq;
                 string appId = "1";
                 string mode = rawData.reqType;
+                string appUsername = rawData.empProfile.AppUsername;
                 string idcard = rawData.empProfile.IdentityCard;
                 string fname = rawData.empProfile.FirstName;
                 string lname = rawData.empProfile.LastName;
@@ -79,7 +80,7 @@ namespace JWTAuthentication.Controllers
                 {
                     case "Create User":
 
-                        bool resultCreate = CreateUserToConsole(idcard, fname, lname, fnameEng, lnameEng, email, empcode);
+                        bool resultCreate = CreateUserToConsole(appUsername, idcard, fname, lname, fnameEng, lnameEng, email, empcode);
 
                         if (resultCreate == true)
                         {
@@ -281,7 +282,7 @@ namespace JWTAuthentication.Controllers
             }
         }
 
-        public bool CreateUserToConsole(string idcard, string fname, string lname, string fnameEng, string lnameEng, string email, string empcode)
+        public bool CreateUserToConsole(string appUsername, string idcard, string fname, string lname, string fnameEng, string lnameEng, string email, string empcode)
         {
             var dataUser = _context.UserDetails.Where(a => a.Id != "99999").Max(a => a.Id);
             int newid = int.Parse(dataUser) + 1;
@@ -294,7 +295,7 @@ namespace JWTAuthentication.Controllers
             else
             {
                 string strSQL = "insert into user_detail values('" + newid.ToString("D5") + "','" + checkData.ToUpper() + "','KSJK','','" + fname + "','" + lname + "','" + fnameEng.ToUpper() + "','";
-                strSQL = strSQL + lnameEng.ToUpper() + "','','','','','','','8888888888888','','" + empcode + "','','','" + idcard + "','','','" + email + "','','','','','','','')";
+                strSQL = strSQL + lnameEng.ToUpper() + "','','','','','','','8888888888888','','" + empcode + "','" + appUsername + "','','" + idcard + "','','','" + email + "','','','','','','','')";
 
                 string connectionString = _configuration.GetConnectionString("UserDatabase");
                 SqlConnection Connection = new SqlConnection(connectionString);

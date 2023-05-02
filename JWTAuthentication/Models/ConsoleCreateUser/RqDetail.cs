@@ -2,6 +2,7 @@
 {
     public class RqDetail
     {
+        public string AppUsername { get; set; }
         public string IdentityCard { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
