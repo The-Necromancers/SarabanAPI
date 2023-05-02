@@ -52,10 +52,10 @@ namespace JWTAuthentication.Controllers
                 {
                     requestId = consoleCreateUserRq.requestId,
                     responseCode = "1002",
-                    responseMsg = "Unauthorized application"
+                    responseMsg = "Unauthorized Application"
                 };
 
-                return StatusCode(401, Res);
+                return StatusCode(400, Res);
             }
 
             // Change Authen Type to Static Token //
@@ -100,12 +100,12 @@ namespace JWTAuthentication.Controllers
                             {
                                 requestId = rawData.requestId,
                                 responseCode = "1001",
-                                responseMsg = "Invalid data"
+                                responseMsg = "Invalid Data (duplicate username)"
                             };
 
-                            CreateLog(method, "Invalid data - duplicate username", appId, rawData.requestId, mode);
+                            CreateLog(method, "Invalid Data - duplicate username", appId, rawData.requestId, mode);
 
-                            return StatusCode(400, addRes);
+                            return StatusCode(200, addRes);
                         }
 
                     case "Edit User":
@@ -131,12 +131,12 @@ namespace JWTAuthentication.Controllers
                             {
                                 requestId = rawData.requestId,
                                 responseCode = "1001",
-                                responseMsg = "Invalid data"
+                                responseMsg = "Invalid Data (duplicate username)"
                             };
 
-                            CreateLog(method, "Invalid data - duplicate username", appId, rawData.requestId, mode);
+                            CreateLog(method, "Invalid Data - duplicate username", appId, rawData.requestId, mode);
 
-                            return StatusCode(400, editRes);
+                            return StatusCode(200, editRes);
                         }
 
                     case "Delete User":
@@ -162,12 +162,12 @@ namespace JWTAuthentication.Controllers
                             {
                                 requestId = rawData.requestId,
                                 responseCode = "1001",
-                                responseMsg = "Invalid data"
+                                responseMsg = "Invalid Data (duplicate username)"
                             };
 
-                            CreateLog(method, "Invalid data - duplicate username", appId, rawData.requestId, mode);
+                            CreateLog(method, "Invalid Data - duplicate username", appId, rawData.requestId, mode);
 
-                            return StatusCode(400, deleteRes);
+                            return StatusCode(200, deleteRes);
                         }
 
                     default:
@@ -175,12 +175,12 @@ namespace JWTAuthentication.Controllers
                         {
                             requestId = rawData.requestId,
                             responseCode = "1001",
-                            responseMsg = "Invalid data"
+                            responseMsg = "Invalid Data (duplicate username)"
                         };
 
-                        CreateLog(method, "Invalid data - duplicate username", appId, rawData.requestId, mode);
+                        CreateLog(method, "Invalid Data - duplicate username", appId, rawData.requestId, mode);
 
-                        return StatusCode(400, res);
+                        return StatusCode(200, res);
                 }
             }
             catch (Exception ex)
