@@ -864,7 +864,7 @@ namespace JWTAuthentication.Controllers
 
         //AOT//
 
-        [Authorize]
+        //[Authorize]
         [HttpGet]
         [Route("GetBasketInfoforAOT")]
         public ActionResult<EdocDocGetBasketInfoRs> GetBasketInfoforAOT([Required] string appID)
@@ -2701,7 +2701,7 @@ namespace JWTAuthentication.Controllers
         {
             try
             {
-                var data = _context_cabinet.FlwCabinets.Where(a => a.RdbmsStatus == "01").OrderByDescending(a => a.CabName).FirstOrDefault();
+                var data = _context_cabinet.FlwCabinets.Where(a => a.RdbmsStatus == "01" && (!a.RdbmsDatabasename.Contains("sec") && !a.CabName.Contains("ลับ"))).OrderByDescending(a => a.CabName).FirstOrDefault();
                 var result = data.RdbmsDatabasename;
 
                 return result;
