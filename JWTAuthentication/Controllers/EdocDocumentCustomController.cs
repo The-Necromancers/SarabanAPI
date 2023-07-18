@@ -864,7 +864,7 @@ namespace JWTAuthentication.Controllers
 
         //AOT//
 
-        //[Authorize]
+        [Authorize]
         [HttpGet]
         [Route("GetBasketInfoforAOT")]
         public ActionResult<EdocDocGetBasketInfoRs> GetBasketInfoforAOT([Required] string appID)

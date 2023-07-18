@@ -74,7 +74,7 @@ namespace JWTAuthentication.Controllers
             {
                 var rawData = edocDocDetailRq.RqDetail;
                 string userBid = string.Empty;
-                string username = string.Empty;
+                string userID = string.Empty;
 
                 //********** check userid **********//
                 _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
@@ -93,13 +93,13 @@ namespace JWTAuthentication.Controllers
                     else
                     {
                         userBid = userMainBid.Bid;
-                        username = userMainBid.Username;
+                        userID = userMainBid.Usrid;
                     }
                 }
                 else
                 {
                     userBid = dataUser.Bid;
-                    username = dataUser.Username;
+                    userID = dataUser.Usrid;
                 }
                 //********************************//
 
@@ -135,7 +135,7 @@ namespace JWTAuthentication.Controllers
                     {
                         AttachDate = data.RegisterDate + " " + data.Registertime,
                         Detail = "เอกสารแนบหลัก",
-                        URL = CreateURL(data.Docuname)
+                        URL = GetURL(data.Docuname, data.Wid, data.Wsubject, userID)
                     });
                 }
 
@@ -148,7 +148,7 @@ namespace JWTAuthentication.Controllers
                         {
                             AttachDate = docAttm.Attachdate + " " + docAttm.Attachtime,
                             Detail = docAttm.Contextattach,
-                            URL = CreateURL(docAttm.Attachname)
+                            URL = GetURL(docAttm.Attachname, data.Wid, data.Wsubject, userID)
                         });
                     }
                 }
@@ -2537,7 +2537,9 @@ namespace JWTAuthentication.Controllers
             string fullName = docuname.Trim();
             fullName = fullName.Replace("\"", "//");
             string fn = IEncrypt2(fullName);
-            string strURL = _configuration.GetSection("MySettings").GetSection("IwebflowSharename").Value + "/content/viewext.asp?fn=" + WebUtility.UrlEncode(fn) + "&ds=" + subject + "&ws=" + wid + "&usr=" + usr + "&wtm=true";
+            string curDB = GetCurrentDB();
+            string encryptDB = AES_EncryptDatabase(curDB, "inf0m@ECL62");
+            string strURL = _configuration.GetSection("MySettings").GetSection("IwebflowSharename").Value + "/viewextx.aspx?d=" + encryptDB + "&fn=" + WebUtility.UrlEncode(fn) + "&ds=" + subject + "&ws=" + wid + "&usr=" + usr + "&wtm=true";
 
             return strURL;
         }
@@ -3819,6 +3821,30 @@ namespace JWTAuthentication.Controllers
             }
 
             return encryptedBytes;
+        }
+
+        public static string AES_EncryptDatabase(string curdb, string password)
+        {
+            string result = string.Empty;
+
+            using (Aes AES = Aes.Create())
+            {
+                using (var md5 = MD5.Create())
+                {
+                    byte[] hash = new byte[32];
+                    byte[] temp = md5.ComputeHash(System.Text.ASCIIEncoding.ASCII.GetBytes(password));
+                    Array.Copy(temp, 0, hash, 0, 16);
+                    Array.Copy(temp, 0, hash, 15, 16);
+                    AES.Key = hash;
+                    AES.Mode = CipherMode.ECB;
+                    System.Security.Cryptography.ICryptoTransform encrypter = AES.CreateEncryptor();
+                    byte[] buffer = System.Text.ASCIIEncoding.ASCII.GetBytes(curdb);
+                    result = Convert.ToBase64String(encrypter.TransformFinalBlock(buffer, 0, buffer.Length));
+                }
+
+            }
+
+            return result;
         }
 
         public static byte[] HashTextToByte(string Message)
