@@ -2379,7 +2379,8 @@ namespace JWTAuthentication.Controllers
                 strHomeDir = strHomeDir + "\\" + newDocuname;
             }
 
-            var dataDocAttm = _context.Docattaches.Where(a => a.Wid == rawData.WID && a.Bid == curBid).OrderByDescending(x => x.Itemno).FirstOrDefault();
+            var dataDocAttm = _context.Docattaches.Where(a => a.Wid == rawData.WID && a.Bid == curBid).OrderByDescending(x => Convert.ToInt32(x.Itemno)).FirstOrDefault();
+
             if (dataDocAttm != null)
             {
                 count = int.Parse(dataDocAttm.Itemno) + 1;
@@ -2470,7 +2471,7 @@ namespace JWTAuthentication.Controllers
             string RegisterDateNewFormat = GetServDateNormalFormat();
             string strNewActionMsg = "วันที่ " + RegisterDateNewFormat + "  " + RegisterTime + "  " + RegisterBdsc + " : " + username + " (เพิ่ม)" + "\n" + "    วันที่ " + RegisterDateNewFormat + "  " + RegisterTime + "  " + RegisterBdsc + " : " + username + " (แก้ไข)" + "\n";
 
-            var dataDocAttm = _context.Docattaches.Where(a => a.Wid == linkWID && a.Bid == curBid).OrderByDescending(x => x.Itemno).FirstOrDefault();
+            var dataDocAttm = _context.Docattaches.Where(a => a.Wid == linkWID && a.Bid == curBid).OrderByDescending(x => Convert.ToInt32(x.Itemno)).FirstOrDefault();
             if (dataDocAttm != null)
             {
                 count = int.Parse(dataDocAttm.Itemno) + 1;
