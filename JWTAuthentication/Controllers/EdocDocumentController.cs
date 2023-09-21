@@ -1869,7 +1869,7 @@ namespace JWTAuthentication.Controllers
             }
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpPost]
         [Route("DocumentCancel")]
         public ActionResult<EdocDocCancelRs> DocumentCancel(EdocDocCancelRq edocDocCancelRq)
