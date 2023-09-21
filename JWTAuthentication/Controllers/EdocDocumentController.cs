@@ -21,6 +21,7 @@ using JWTAuthentication.Models.EdocDocumentTracking;
 using JWTAuthentication.Models.EdocDocumentActionMessage;
 using JWTAuthentication.Models.EdocDocumentSend;
 using JWTAuthentication.Models.EdocDocumentClose;
+using JWTAuthentication.Models.EdocDocumentCancel;
 using JWTAuthentication.Models.EdocDocumentFollowup;
 using JWTAuthentication.Models.EdocDocumentAttachActionMessage;
 using JWTAuthentication.Models.EdocDocumentCreateEForm;
@@ -1868,6 +1869,114 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        //[Authorize]
+        [HttpPost]
+        [Route("DocumentCancel")]
+        public ActionResult<EdocDocCancelRs> DocumentCancel(EdocDocCancelRq edocDocCancelRq)
+        {
+            string method = "DocumentCancel";
+            try
+            {
+                var rawData = edocDocCancelRq.RqDetail;
+                string userBid = string.Empty;
+                string username = string.Empty;
+
+                //********** check userid **********//
+                _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
+                var dataUser = _context.Userinfos.Where(a => a.Usrid == rawData.Username && a.Bid == rawData.BasketID).FirstOrDefault();
+
+                if (dataUser == null)
+                {
+                    var userMainBid = _context.Userinfos.Where(a => a.Usrid == rawData.Username && a.Mainbid == "0").FirstOrDefault();
+
+                    if (userMainBid == null)
+                    {
+                        var responseMsg = CheckUser(method, edocDocCancelRq.RqHeader.AppId);
+
+                        return StatusCode(400, responseMsg);
+                    }
+                    else
+                    {
+                        userBid = userMainBid.Bid;
+                        username = userMainBid.Username;
+                    }
+                }
+                else
+                {
+                    userBid = dataUser.Bid;
+                    username = dataUser.Username;
+                }
+                //********************************//
+
+                //********** check data **********//
+                var data = _context.Workinfos.Where(a => a.Wid == rawData.WID).FirstOrDefault();
+                if (data != null)
+                {
+                    var dataWorkInproc = _context.Workinprocesses.Where(a => a.Wid == rawData.WID && a.Bid == userBid).FirstOrDefault();
+                    if (dataWorkInproc == null)
+                    {
+                        var responseMsg = CheckData(method, edocDocCancelRq.RqHeader.AppId, "1");
+
+                        return StatusCode(400, responseMsg);
+                    }
+                }
+                else
+                {
+                    var responseMsg = CheckData(method, edocDocCancelRq.RqHeader.AppId, "1");
+
+                    return StatusCode(400, responseMsg);
+                }
+                //********************************//
+
+                if (CancelWip(rawData.WID, username, userBid))
+                {
+                    var res = new EdocDocCloseRs
+                    {
+                        RsHeader = new Models.EdocDocumentClose.RsHeader
+                        {
+                            AppId = edocDocCancelRq.RqHeader.AppId,
+                            Status = new Models.EdocDocumentClose.RsHeaderStatus
+                            {
+                                OrgStatusCode = "0",
+                                OrgStatusDesc = "Success",
+                                StatusCode = "0"
+                            }
+                        }
+                    };
+
+                    CreateLog(method, "Success", edocDocCancelRq.RqHeader.AppId);
+
+                    return StatusCode(200, res);
+                }
+                else
+                {
+                    CreateLog(method, "Unsuccess", edocDocCancelRq.RqHeader.AppId);
+
+                    return StatusCode(400, "Unsuccess");
+                }
+            }
+            catch (Exception ex)
+            {
+                var res = new EdocDocCloseRs
+                {
+                    RsHeader = new Models.EdocDocumentClose.RsHeader
+                    {
+                        AppId = edocDocCancelRq.RqHeader.AppId,
+                        Status = new Models.EdocDocumentClose.RsHeaderStatus
+                        {
+                            OrgStatusCode = "Error999",
+                            OrgStatusDesc = ex.Message,
+                            StatusCode = "-1"
+                        }
+                    },
+                };
+
+                CreateLog(method, "Error999 - " + ex.Message, edocDocCancelRq.RqHeader.AppId);
+
+                return StatusCode(400, res);
+            }
+        }
+
         [Authorize]
         [HttpGet]
         [Route("GetBasketInfo")]
@@ -3471,6 +3580,46 @@ namespace JWTAuthentication.Controllers
             else
             {
                 return false;
+            }
+        }
+
+        public Boolean CancelWip(string wid, string usrID, string userBid)
+        {
+            var dataWorkInproc = _context.Workinprocesses.Where(a => a.Wid == wid && a.Bid == userBid && a.RegisterNo != "-").FirstOrDefault();
+            var strSQL = "ifmflow_sp_CancelWIP '" + wid + "', '" + dataWorkInproc.RegisterNo + "', '" + dataWorkInproc.ItemNo + "', '" + userBid + "'";
+            string connectionString = SetSQLConnectionString();
+            SqlConnection Connection = new SqlConnection(connectionString);
+            Connection.Open();
+            SqlTransaction Transaction = null;
+            SqlDataAdapter da = new SqlDataAdapter(strSQL, Connection);
+            SqlCommandBuilder cb = new SqlCommandBuilder(da);
+            da.SelectCommand.Transaction = Transaction;
+            DataSet ds = new DataSet();
+            da.Fill(ds, "dscancelwip");
+            var dt = ds.Tables[0];
+            
+            if (dt.Rows.Count > 0)
+            {
+                var dr = dt.Rows[0];
+                string strCase = dr[0].ToString();
+                switch (strCase)
+                {
+                    case "เอกสารได้ถูกยกเลิกไปแล้ว":
+                        throw new Exception(strCase);
+                    case "รายการนี้อยู่ระหว่างการตรวจสอบ ไม่สามารถยกเลิกได้":
+                        throw new Exception(strCase);
+                    case "ท่านไม่ใช่เจ้าของ ไม่สามารถยกเลิกเอกสารได้":
+                        throw new Exception(strCase);
+                    case "ดำเนินการยกเลิกเอกสารเรียบร้อยแล้ว":
+                        UpdateFollowupMsg(dataWorkInproc.Bdsc, usrID, dataWorkInproc.RegisterNo, wid, "ยกเลิก");
+                        return true;
+                    default:
+                        throw new Exception(strCase);
+                }
+            }
+            else
+            {
+                throw new Exception("ไม่สามารถยกเลิกได้");
             }
         }
 
