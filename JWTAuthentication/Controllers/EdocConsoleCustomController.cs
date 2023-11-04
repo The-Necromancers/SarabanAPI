@@ -91,7 +91,7 @@ namespace JWTAuthentication.Controllers
                                 responseMsg = "Success"
                             };
 
-                            CreateLog(method, "Success", appId, rawData.requestId, mode);
+                            CreateLog(method, "Code 0000 : Success", appId, rawData.requestId, mode);
 
                             return StatusCode(200, addRes);
                         }
@@ -104,7 +104,7 @@ namespace JWTAuthentication.Controllers
                                 responseMsg = "Invalid Data (duplicate username)"
                             };
 
-                            CreateLog(method, "Invalid Data - duplicate username", appId, rawData.requestId, mode);
+                            CreateLog(method, "Code 1001 : Invalid Data - duplicate username", appId, rawData.requestId, mode);
 
                             return StatusCode(200, addRes);
                         }
@@ -122,7 +122,7 @@ namespace JWTAuthentication.Controllers
                                 responseMsg = "Success"
                             };
 
-                            CreateLog(method, "Success + " + resultUpdate.Item2 + "", appId, rawData.requestId, mode);
+                            CreateLog(method, "Code 0000 : Success + " + resultUpdate.Item2 + "", appId, rawData.requestId, mode);
 
                             return StatusCode(200, editRes);
                         }
@@ -135,7 +135,7 @@ namespace JWTAuthentication.Controllers
                                 responseMsg = "Invalid Data (duplicate username)"
                             };
 
-                            CreateLog(method, "Invalid Data - duplicate username", appId, rawData.requestId, mode);
+                            CreateLog(method, "Code 1001 : Invalid Data - duplicate username", appId, rawData.requestId, mode);
 
                             return StatusCode(200, editRes);
                         }
@@ -153,7 +153,7 @@ namespace JWTAuthentication.Controllers
                                 responseMsg = "Success"
                             };
 
-                            CreateLog(method, "Success", appId, rawData.requestId, mode);
+                            CreateLog(method, "Code 0000 : Success", appId, rawData.requestId, mode);
 
                             return StatusCode(200, deleteRes);
                         }
@@ -166,7 +166,7 @@ namespace JWTAuthentication.Controllers
                                 responseMsg = "Invalid Data (duplicate username)"
                             };
 
-                            CreateLog(method, "Invalid Data - duplicate username", appId, rawData.requestId, mode);
+                            CreateLog(method, "Code 1001 : Invalid Data - duplicate username", appId, rawData.requestId, mode);
 
                             return StatusCode(200, deleteRes);
                         }
@@ -179,7 +179,7 @@ namespace JWTAuthentication.Controllers
                             responseMsg = "Invalid Data (duplicate username)"
                         };
 
-                        CreateLog(method, "Invalid Data - duplicate username", appId, rawData.requestId, mode);
+                        CreateLog(method, "Code 1001 : Invalid Data - duplicate username", appId, rawData.requestId, mode);
 
                         return StatusCode(200, res);
                 }
