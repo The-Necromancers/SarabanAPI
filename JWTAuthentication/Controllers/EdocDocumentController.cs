@@ -2649,7 +2649,7 @@ namespace JWTAuthentication.Controllers
             string fn = IEncrypt2(fullName);
             string curDB = GetCurrentDB();
             string encryptDB = AES_EncryptDatabase(curDB, "inf0m@ECL62");
-            string strURL = _configuration.GetSection("MySettings").GetSection("IwebflowSharename").Value + "/viewextx.aspx?d=" + encryptDB + "&fn=" + WebUtility.UrlEncode(fn) + "&ds=" + subject + "&ws=" + wid + "&usr=" + usr + "&wtm=true";
+            string strURL = _configuration.GetSection("MySettings").GetSection("IwebflowSharename").Value + "/viewextx.aspx?d=" + WebUtility.UrlEncode(encryptDB) + "&fn=" + WebUtility.UrlEncode(fn) + "&ds=" + subject + "&ws=" + wid + "&usr=" + usr + "&wtm=true";
 
             return strURL;
         }

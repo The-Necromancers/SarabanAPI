@@ -1702,7 +1702,9 @@ namespace JWTAuthentication.Controllers
             string fullName = docuname.Trim();
             fullName = fullName.Replace("\"", "//");
             string fn = IEncrypt2(fullName);
-            string strURL = _configuration.GetSection("MySettings").GetSection("IwebflowSharename").Value + "/content/viewext.asp?fn=" + WebUtility.UrlEncode(fn) + "&ds=" + subject + "&ws=" + wid + "&usr=" + usr + "&wtm=true";
+            string curDB = GetCurrentDB();
+            string encryptDB = AES_EncryptDatabase(curDB, "inf0m@ECL62");
+            string strURL = _configuration.GetSection("MySettings").GetSection("IwebflowSharename").Value + "/viewextx.aspx?d=" + WebUtility.UrlEncode(encryptDB) + "&fn=" + WebUtility.UrlEncode(fn) + "&ds=" + subject + "&ws=" + wid + "&usr=" + usr + "&wtm=true";
 
             return strURL;
         }
@@ -3141,6 +3143,30 @@ namespace JWTAuthentication.Controllers
             DateTime pastDate = DateTime.Parse(date);
             var totalDate = (curDate - pastDate).TotalDays;
             string result = totalDate.ToString();
+
+            return result;
+        }
+
+        public static string AES_EncryptDatabase(string curdb, string password)
+        {
+            string result = string.Empty;
+
+            using (Aes AES = Aes.Create())
+            {
+                using (var md5 = MD5.Create())
+                {
+                    byte[] hash = new byte[32];
+                    byte[] temp = md5.ComputeHash(System.Text.ASCIIEncoding.ASCII.GetBytes(password));
+                    Array.Copy(temp, 0, hash, 0, 16);
+                    Array.Copy(temp, 0, hash, 15, 16);
+                    AES.Key = hash;
+                    AES.Mode = CipherMode.ECB;
+                    System.Security.Cryptography.ICryptoTransform encrypter = AES.CreateEncryptor();
+                    byte[] buffer = System.Text.ASCIIEncoding.ASCII.GetBytes(curdb);
+                    result = Convert.ToBase64String(encrypter.TransformFinalBlock(buffer, 0, buffer.Length));
+                }
+
+            }
 
             return result;
         }
