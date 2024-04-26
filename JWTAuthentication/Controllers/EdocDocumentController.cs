@@ -3089,11 +3089,25 @@ namespace JWTAuthentication.Controllers
 
             if (strPrefixOut == "-" || strPrefixOut == "")
             {
-                strPrefixIn = ifmFlowDept.Prefixdept;
+                if (rawData.WID != "")
+                {
+                    strPrefixIn = ifmFlowDept.Prefixdept + rawData.WID;
+                }
+                else
+                {
+                    strPrefixIn = ifmFlowDept.Prefixdept;
+                }
             }
             else
             {
-                strPrefixIn = ifmFlowDept.Prefixdept + strPrefixOut;
+                if (rawData.WID != "")
+                {
+                    strPrefixIn = ifmFlowDept.Prefixdept + strPrefixOut + rawData.WID;
+                }
+                else
+                {
+                    strPrefixIn = ifmFlowDept.Prefixdept + strPrefixOut;
+                }
             }
 
             var strSQL = "ifmflow_sp_ControlBasketinfo '6','" + ownerWsubType + "','-','" + curDeptcode + "','" + (ConstWsubtypeIndoc).Trim() + "','02','" + typeDoc + "','" + strRegMode + "'";
