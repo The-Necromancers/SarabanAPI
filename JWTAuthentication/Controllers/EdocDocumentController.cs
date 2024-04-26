@@ -2965,7 +2965,14 @@ namespace JWTAuthentication.Controllers
 
                     if (typeDoc == "01" && strPrefixIn != "ไม่อนุญาตออกเลข")
                     {
-                        wid = strPrefixIn + strRegNo + "/" + strDate.ToString();
+                        if (rawData.WID == "")
+                        {
+                            wid = strPrefixIn + strRegNo + "/" + strDate.ToString();
+                        }
+                        else
+                        {
+                            wid = strPrefixIn + rawData.WID + strRegNo + "/" + strDate.ToString();
+                        }
                     }
 
                     if (typeDoc != "01" && wsubType.Category == "0")
@@ -3071,6 +3078,7 @@ namespace JWTAuthentication.Controllers
             string curBid = userBid;
             var BasketInfo = _context.Basketinfos.Where(a => a.Bid == curBid).FirstOrDefault();
             string strPrefixIn = BasketInfo.Wfid; //WebservicePrefixIN
+            string strPrefixOut = BasketInfo.Wfdsc;
             string curDir = BasketInfo.HomeDir;
             string curBdsc = BasketInfo.Bdsc;
             string curUsrname = rawData.Username.ToUpper();
@@ -3078,7 +3086,15 @@ namespace JWTAuthentication.Controllers
             string ownerWsubType = curBid;
 
             var ifmFlowDept = _context.IfmflowDepartments.Where(a => a.Deptcode == curDeptcode).FirstOrDefault();
-            strPrefixIn = ifmFlowDept.Prefixdept;
+
+            if (strPrefixOut == "-" || strPrefixOut == "")
+            {
+                strPrefixIn = ifmFlowDept.Prefixdept;
+            }
+            else
+            {
+                strPrefixIn = ifmFlowDept.Prefixdept + strPrefixOut;
+            }
 
             var strSQL = "ifmflow_sp_ControlBasketinfo '6','" + ownerWsubType + "','-','" + curDeptcode + "','" + (ConstWsubtypeIndoc).Trim() + "','02','" + typeDoc + "','" + strRegMode + "'";
             string connectionString = SetSQLConnectionString();
