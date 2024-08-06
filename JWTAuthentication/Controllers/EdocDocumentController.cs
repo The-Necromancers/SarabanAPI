@@ -1774,7 +1774,7 @@ namespace JWTAuthentication.Controllers
                     }
                 }
 
-                string strSQL = "insert into ActionMessage values('" + rawData.WID + "','" + userBid + "','" + rawData.Username.ToUpper() + "','" + currentDate + "','" + currentTime + "','" + actionMsg + "','" + rawData.PresentTo + "','01','" + signedHashFollowupText + "','" + ImageBase64 + "')";
+                string strSQL = "insert into ActionMessage values('" + rawData.WID + "','" + userBid + "','" + rawData.Username.ToUpper() + "','" + currentDate + "','" + currentTime + "','" + actionMsg + "','" + rawData.PresentTo + "','01','" + signedHashFollowupText + "','" + ImageBase64 + "', '" + dataKeyStore.Publickey + "')";
 
                 string connectionString = SetSQLConnectionString();
                 SqlConnection Connection = new SqlConnection(connectionString);
