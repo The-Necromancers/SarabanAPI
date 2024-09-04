@@ -3805,10 +3805,20 @@ namespace JWTAuthentication.Controllers
         {
             try
             {
+                var result = string.Empty;
                 var data = _context_cabinet.FlwCabinets.Where(a => a.RdbmsStatus == "01" && (!a.RdbmsDatabasename.Contains("sec") && !a.CabName.Contains("ลับ"))).OrderByDescending(a => a.CabName).FirstOrDefault();
-                var result = data.RdbmsDatabasename;
 
-                return result;
+                if (data == null)
+                {
+                    var item = _context_cabinet.FlwCabinets.Where(a => a.RdbmsStatus == "01").OrderByDescending(a => a.CabName).FirstOrDefault();
+                    result = item.RdbmsDatabasename;
+                    return result;
+                }
+                else
+                {
+                    result = data.RdbmsDatabasename;
+                    return result;
+                }
             }
             catch (Exception)
             {
