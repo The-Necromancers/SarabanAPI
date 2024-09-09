@@ -2461,6 +2461,19 @@ namespace JWTAuthentication.Controllers
             dataBasketInfo.DocuName = newDocuname;
             _context.SaveChanges();
 
+            string ext = Path.GetExtension(dataWorkInfo.Docuname);
+
+            if (string.IsNullOrWhiteSpace(ext))
+            {
+                strExt = Path.GetExtension(strSourcePath);
+                strDestPath = dataWorkInfo.Docuname + strExt;
+                System.IO.File.Copy(strSourcePath, strDestPath);
+                dataWorkInfo.Docuname = strDestPath;
+                _context.SaveChanges();
+
+                return true;
+            }
+
             if (fileTemp != "")
             {
                 if (fileTemp == "notfound")
