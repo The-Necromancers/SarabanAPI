@@ -2465,8 +2465,8 @@ namespace JWTAuthentication.Controllers
 
             if (string.IsNullOrWhiteSpace(ext))
             {
-                strExt = Path.GetExtension(strSourcePath);
-                strDestPath = dataWorkInfo.Docuname + strExt;
+                strExt = rawData.FileExtension.ToUpper();
+                strDestPath = dataWorkInfo.Docuname + "." + strExt;
                 System.IO.File.Copy(strSourcePath, strDestPath);
                 dataWorkInfo.Docuname = strDestPath;
                 _context.SaveChanges();
@@ -2482,11 +2482,11 @@ namespace JWTAuthentication.Controllers
                 }
                 else
                 {
-                    strExt = Path.GetExtension(strSourcePath);
+                    strExt = rawData.FileExtension.ToUpper();
                     strHomeDir = dataBasketInfo.HomeDir;
                     string flowPath = strHomeDir.ToUpper().Replace("\\\\" + ipWebServer.ToUpper(), flowData);
-                    strDestPath = flowPath + "\\" + newDocuname + strExt;
-                    strHomeDir = strHomeDir + "\\" + newDocuname + strExt;
+                    strDestPath = flowPath + "\\" + newDocuname + "." + strExt;
+                    strHomeDir = strHomeDir + "\\" + newDocuname + "." + strExt;
 
                     if (System.IO.File.Exists(strDestPath))
                     {
@@ -2520,7 +2520,7 @@ namespace JWTAuthentication.Controllers
                 Attachtime = RegisterTime,
                 Attachname = strHomeDir,
                 Userattach = username + " : " + dataWorkInfo.RegisterBdsc,
-                Contextattach = rawData.FileName + strExt,
+                Contextattach = rawData.FileName + "." + strExt,
                 Itemno = count.ToString(),
                 Actionmsg = strNewActionMsg,
                 Linkwid = rawData.LinkWID,
