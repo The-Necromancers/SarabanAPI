@@ -194,7 +194,7 @@ namespace JWTAuthentication.Controllers
                     responseMsg = ex.Message
                 };
 
-                CreateLog(method, "9999" + ex.Message, appId, consoleCreateUserRq.requestId, consoleCreateUserRq.reqType);
+                CreateLogV2(method, "9999 " + ex.Message, appId, consoleCreateUserRq.requestId, consoleCreateUserRq.reqType, consoleCreateUserRq);
 
                 return StatusCode(500, res);
             }
@@ -489,6 +489,28 @@ namespace JWTAuthentication.Controllers
                 string result = "Server=" + ip + "Database=" + dbName + "user id=" + uid + "Password=" + pwd + "ConnectRetryCount=0";
 
                 return result;
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        public bool CreateLogV2(string method, string errorMsg, string appID, string reqID, string reqType, ConsoleCreateUserRq reqBody)
+        {
+            try
+            {
+                if (!Directory.Exists("c:\\WebAPILog"))
+                {
+                    Directory.CreateDirectory("c:\\WebAPILog");
+                }
+                var remoteIpAddress = Request.HttpContext.Connection.RemoteIpAddress;
+                var filename = "c:\\WebAPILog\\Console_api_" + DateTime.Now.ToString("yyyy-MM-dd", new CultureInfo("th-TH")) + ".txt";
+                var resBody = Newtonsoft.Json.JsonConvert.SerializeObject(reqBody);
+                System.IO.File.AppendAllText(filename, System.Environment.NewLine + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", new CultureInfo("th-TH")) + " " + "RequestID =" + " " + reqID + " " + method + " : " + reqType + System.Environment.NewLine + "Request From appID =" + " " + "" + appID + "" + " " + "" + remoteIpAddress + "" + " " + "" + errorMsg + "" + Environment.NewLine + resBody + Environment.NewLine);
+
+                return true;
             }
             catch (Exception)
             {
