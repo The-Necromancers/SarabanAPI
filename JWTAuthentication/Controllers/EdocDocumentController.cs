@@ -1671,7 +1671,8 @@ namespace JWTAuthentication.Controllers
                 string userBid = string.Empty;
                 string username = string.Empty;
                 string ImageBase64 = string.Empty;
-                string useSignature = string.Empty;
+                string userSignature = string.Empty;
+                string userPosition = string.Empty;
 
                 //********** check userid **********//
                 _context.Database.GetDbConnection().ConnectionString = GetConnectionString();
@@ -1691,14 +1692,16 @@ namespace JWTAuthentication.Controllers
                     {
                         userBid = userMainBid.Bid;
                         username = userMainBid.Username;
-                        useSignature = userMainBid.SecureSignature;
+                        userSignature = userMainBid.SecureSignature;
+                        userPosition = userMainBid.Position;
                     }
                 }
                 else
                 {
                     userBid = dataUser.Bid;
                     username = dataUser.Username;
-                    useSignature = dataUser.SecureSignature;
+                    userSignature = dataUser.SecureSignature;
+                    userPosition = dataUser.Position;
                 }
                 //********************************//
 
@@ -1774,7 +1777,8 @@ namespace JWTAuthentication.Controllers
                     }
                 }
 
-                string strSQL = "insert into ActionMessage values('" + rawData.WID + "','" + userBid + "','" + rawData.Username.ToUpper() + "','" + currentDate + "','" + currentTime + "','" + actionMsg + "','" + rawData.PresentTo + "','01','" + signedHashFollowupText + "','" + ImageBase64 + "', '" + dataKeyStore.Publickey + "')";
+                //string strSQL = "insert into ActionMessage values('" + rawData.WID + "','" + userBid + "','" + rawData.Username.ToUpper() + "','" + currentDate + "','" + currentTime + "','" + actionMsg + "','" + rawData.PresentTo + "','01','" + signedHashFollowupText + "','" + ImageBase64 + "', '" + dataKeyStore.Publickey + "')";
+                string strSQL = "insert into ActionMessage values(@wid, @bid, @username, @curdate, @curtime, @actionmsg, @presentto, @cmdcode, @signhashed, @imagebase64, @publickey, @position, @statecode)";
 
                 string connectionString = SetSQLConnectionString();
                 SqlConnection Connection = new SqlConnection(connectionString);
@@ -1788,6 +1792,19 @@ namespace JWTAuthentication.Controllers
                 Command = Connection.CreateCommand();
                 Command.Transaction = Transaction;
                 Command.CommandText = strSQL;
+                Command.Parameters.Add(new SqlParameter("@wid", rawData.WID));
+                Command.Parameters.Add(new SqlParameter("@bid", userBid));
+                Command.Parameters.Add(new SqlParameter("@username", rawData.Username.ToUpper()));
+                Command.Parameters.Add(new SqlParameter("@curdate", currentDate));
+                Command.Parameters.Add(new SqlParameter("@curtime", currentTime));
+                Command.Parameters.Add(new SqlParameter("@actionmsg", actionMsg));
+                Command.Parameters.Add(new SqlParameter("@presentto", rawData.PresentTo));
+                Command.Parameters.Add(new SqlParameter("@cmdcode", "01"));
+                Command.Parameters.Add(new SqlParameter("@signhashed", signedHashFollowupText));
+                Command.Parameters.Add(new SqlParameter("@imagebase64", ImageBase64));
+                Command.Parameters.Add(new SqlParameter("@publickey", dataKeyStore.Publickey));
+                Command.Parameters.Add(new SqlParameter("@position", userPosition));
+                Command.Parameters.Add(new SqlParameter("@statecode", "02"));
                 Command.ExecuteNonQuery();
                 Connection.Close();
 

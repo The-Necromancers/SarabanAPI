@@ -295,7 +295,7 @@ namespace JWTAuthentication.Controllers
             else
             {
                 string strSQL = "insert into user_detail values('" + newid.ToString("D5") + "','" + checkData.ToUpper() + "','KSJK','','" + fname + "','" + lname + "','" + fnameEng.ToUpper() + "','";
-                strSQL = strSQL + lnameEng.ToUpper() + "','','','','','','','8888888888888','','" + empcode + "','" + appUsername + "','','" + idcard + "','','','" + email + "','','','','','','','')";
+                strSQL = strSQL + lnameEng.ToUpper() + "','','','','','','','8888888888888','','" + empcode + "','" + idcard + "','','" + appUsername + "','','','" + email + "','','','','','','','')";
 
                 string connectionString = _configuration.GetConnectionString("UserDatabase");
                 SqlConnection Connection = new SqlConnection(connectionString);
@@ -354,7 +354,7 @@ namespace JWTAuthentication.Controllers
                 }
 
                 string strSQL = "update user_detail set tname = '" + fname + "', tsurname = '" + lname + "', ename = '" + fnameEng + "', esurname = '" + lnameEng + "', u_email = '";
-                strSQL = strSQL + email + "', u_id1 = '" + empcode + "', u_address = '" + log + "' where u_tel1 = '" + idcard + "'";
+                strSQL = strSQL + email + "', u_id1 = '" + empcode + "', u_address = '" + log + "', u_tel2 = 'update' where u_id2 = '" + idcard + "'";
 
                 string connectionString = _configuration.GetConnectionString("UserDatabase");
                 SqlConnection Connection = new SqlConnection(connectionString);
@@ -386,7 +386,7 @@ namespace JWTAuthentication.Controllers
 
             if (data != null && status != null)
             {
-                string strSQL = "update user_detail set u_status = '" + status.Id + "' where u_tel1 = '" + idcard + "'";
+                string strSQL = "update user_detail set u_status = '" + status.Id + "', u_tel2 = 'delete' where u_id2 = '" + idcard + "'";
 
                 string connectionString = _configuration.GetConnectionString("UserDatabase");
                 SqlConnection Connection = new SqlConnection(connectionString);

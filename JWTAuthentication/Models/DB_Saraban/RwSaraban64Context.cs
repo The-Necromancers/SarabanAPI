@@ -2241,6 +2241,10 @@ namespace JWTAuthentication.Models.DB_Saraban
                     .HasMaxLength(10)
                     .IsUnicode(false);
 
+                entity.Property(e => e.Position)
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.StateCode)
                     .HasMaxLength(2)
                     .IsUnicode(false);

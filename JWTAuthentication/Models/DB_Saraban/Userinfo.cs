@@ -24,5 +24,6 @@ namespace JWTAuthentication.Models.DB_Saraban
         public string? SecureIfmflowDepartment { get; set; }
         public string? SecureBasketinfo { get; set; }
         public string? StartDate { get; set; }
+        public string? Position { get; set; }
     }
 }
