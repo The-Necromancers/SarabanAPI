@@ -318,7 +318,7 @@ namespace JWTAuthentication.Controllers
 
         public (bool, string) UpdateUserToConsole(string idcard, string fname, string lname, string fnameEng, string lnameEng, string email, string empcode)
         {
-            var data = _context.UserDetails.Where(a => a.UTel1 == idcard).FirstOrDefault();
+            var data = _context.UserDetails.Where(a => a.UId2 == idcard).FirstOrDefault();
             string log = "";
 
             if (data != null)
@@ -381,7 +381,7 @@ namespace JWTAuthentication.Controllers
 
         public bool DeleteUserfromConsole(string idcard)
         {
-            var data = _context.UserDetails.Where(a => a.UTel1 == idcard).FirstOrDefault();
+            var data = _context.UserDetails.Where(a => a.UId2 == idcard).FirstOrDefault();
             var status = _context.UstatusDetails.Where(a => a.Id == "000").FirstOrDefault();
 
             if (data != null && status != null)
