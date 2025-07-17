@@ -2483,7 +2483,8 @@ namespace JWTAuthentication.Controllers
             if (string.IsNullOrWhiteSpace(ext))
             {
                 strExt = rawData.FileExtension.ToUpper();
-                strDestPath = dataWorkInfo.Docuname + "." + strExt;
+                string flowPath = dataWorkInfo.Docuname.ToUpper().Replace("\\\\" + ipWebServer.ToUpper(), flowData);
+                strDestPath = flowPath + "." + strExt;
                 System.IO.File.Copy(strSourcePath, strDestPath);
                 dataWorkInfo.Docuname = strDestPath;
                 _context.SaveChanges();
