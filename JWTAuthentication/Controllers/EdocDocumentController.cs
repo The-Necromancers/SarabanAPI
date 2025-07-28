@@ -2480,13 +2480,13 @@ namespace JWTAuthentication.Controllers
 
             string ext = Path.GetExtension(dataWorkInfo.Docuname);
 
-            if (string.IsNullOrWhiteSpace(ext))
+            if (string.IsNullOrWhiteSpace(ext) && !string.IsNullOrWhiteSpace(rawData.FileName) && !string.IsNullOrWhiteSpace(rawData.FileData) && !string.IsNullOrWhiteSpace(rawData.FileExtension))
             {
                 strExt = rawData.FileExtension.ToUpper();
                 string flowPath = dataWorkInfo.Docuname.ToUpper().Replace("\\\\" + ipWebServer.ToUpper(), flowData);
                 strDestPath = flowPath + "." + strExt;
                 System.IO.File.Copy(strSourcePath, strDestPath);
-                dataWorkInfo.Docuname = strDestPath;
+                dataWorkInfo.Docuname = dataWorkInfo.Docuname + "." + strExt;
                 _context.SaveChanges();
 
                 return true;
@@ -2547,7 +2547,6 @@ namespace JWTAuthentication.Controllers
             _context.Docattaches.Add(addAttm);
 
             dataFollowup.Wserial = "-";
-            dataFollowup.Wid = rawData.WID;
             dataFollowup.ActionMsg = dataFollowup.ActionMsg + "\r" + "\n" + "วันที่ " + RegisterDateNewFormat + "  " + RegisterTime + "  " + dataWorkInfo.RegisterBdsc + " : " + username + "\r" + "\n" + " เพิ่มเอกสารแนบ" + "\r" + "\n";
 
             _context.SaveChanges();
@@ -3543,7 +3542,12 @@ namespace JWTAuthentication.Controllers
                 dataWorkInfo.Worigin = from;
                 dataWorkInfo.WownerBdsc = sendto;
                 dataWorkInfo.Wsubject = subject;
-                dataWorkInfo.Wdate = rawData.DocDate.Replace("-", "/");
+
+                if (!string.IsNullOrWhiteSpace(rawData.DocDate))
+                {
+                    dataWorkInfo.Wdate = rawData.DocDate.Replace("-", "/");
+                }
+
                 dataWorkInfo.Wid = rawData.WID;
                 dataWorkInfo.Dsc = description;
 
